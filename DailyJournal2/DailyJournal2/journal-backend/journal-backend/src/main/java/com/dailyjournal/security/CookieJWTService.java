@@ -32,8 +32,8 @@ public class CookieJWTService {
     // Cookie settings
     private static final String COOKIE_PATH = "/";
     private static final boolean COOKIE_HTTP_ONLY = true;
-    private static final boolean COOKIE_SECURE = false; // Set to true in production with HTTPS
-    private static final String COOKIE_SAME_SITE = "Lax";
+    private static final boolean COOKIE_SECURE = true; // Set to true in production with HTTPS
+    private static final String COOKIE_SAME_SITE = "None";
 
     public CookieJWTService(@Value("${jwt.secret}") String secret,
                            @Value("${jwt.access-token-expiration:900000}") long accessTokenExpiration, // 15 minutes
