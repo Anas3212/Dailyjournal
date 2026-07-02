@@ -1,0 +1,9 @@
+node_modules/
+build/
+target/
+dist/
+.env
+.idea/
+.vscode/
+*.class
+*.log

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: dailyjournal-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: DATABASE_URL
+        value: jdbc:mysql://gateway01.us-east-1.prod.aws.tidbcloud.com:4000/journal_db?sslMode=VERIFY_IDENTITY&createDatabaseIfNotExist=true
+      - key: DATABASE_USERNAME
+        value: aeNKxL327wzcf7w.root
+      - key: DATABASE_PASSWORD
+        value: 5tWLQkIZn3SNqoSg
+      - key: JWT_SECRET
+        value: your-secure-jwt-secret-key-daily-journal-512bits!
+      - key: APP_BASE_URL
+        fromService:
+          type: web
+          name: dailyjournal-backend
+          property: host
+    healthCheckPath: /actuator/health

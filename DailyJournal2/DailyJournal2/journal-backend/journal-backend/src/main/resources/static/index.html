@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Daily Journal App - User + Journal</title>
+    <style>
+        body { font-family: Arial; margin: 2rem; }
+        input, textarea, button { display: block; margin: 0.5rem 0; width: 100%; max-width: 400px; }
+        .journal, .user-info { border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; background: #f9f9f9; }
+        h2 { color: #333; }
+        .token-box { word-break: break-all; font-size: 0.9rem; color: green; }
+    </style>
+</head>
+<body>
+<h1>📝 Daily Journal App</h1>
+
+<!-- ✅ Register -->
+<h2>🔐 Register</h2>
+<input id="regName" placeholder="Name" />
+<input id="regEmail" placeholder="Email" type="email" />
+<input id="regPass" placeholder="Password" type="password" />
+<button onclick="register()">Register</button>
+
+<!-- ✅ Login -->
+<h2>🔓 Login</h2>
+<input id="logEmail" placeholder="Email" type="email" />
+<input id="logPass" placeholder="Password" type="password" />
+<button onclick="login()">Login</button>
+<div class="token-box" id="tokenBox"></div>
+
+<!-- ✅ Upload Profile Picture -->
+<h2>🖼️ Upload Profile Picture</h2>
+<input type="file" id="profilePic" />
+<button onclick="uploadProfilePic()">Upload Photo</button>
+
+<!-- ✅ Get Current User -->
+<h2>🙋 My Profile</h2>
+<button onclick="getProfile()">Get My Info</button>
+<div id="userInfo" class="user-info"></div>
+
+<!-- ✅ Update User -->
+<h2>✏️ Update Profile</h2>
+<input id="updateName" placeholder="New Name" />
+<input id="updateEmail" placeholder="New Email" type="email" />
+<input id="updatePass" placeholder="New Password" type="password" />
+<button onclick="updateUser()">Update</button>
+
+<!-- ✅ Upload Media File -->
+<h2>📤 Upload Journal File</h2>
+<input type="file" id="uploadFile" />
+<button onclick="uploadFile()">Upload</button>
+<div id="uploadStatus"></div>
+
+<!-- ✅ Create Journal -->
+<h2>📝 Create Journal</h2>
+<input id="journalTitle" placeholder="Title" />
+<textarea id="journalContent" placeholder="Content"></textarea>
+<input id="journalMood" placeholder="Mood" />
+<input id="journalTags" placeholder="Tags (e.g. #Happy)" />
+<input id="journalDate" type="date" />
+<input id="mediaPath" placeholder="Media Path (auto-filled after upload)" />
+<input id="userId" placeholder="User ID" />
+<button onclick="createJournal()">Create Journal</button>
+
+<!-- ✅ View Journals -->
+<h2>📚 My Journals</h2>
+<input id="fetchUserId" placeholder="User ID" />
+<button onclick="getJournals()">Load Journals</button>
+<div id="journals"></div>
+
+<script>
+    let token = localStorage.getItem("token") || "";
+
+    function register() {
+      fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('regName').value,
+          email: document.getElementById('regEmail').value,
+          password: document.getElementById('regPass').value
+        })
+      })
+      .then(res => res.json())
+      .then(data => alert("Registered. Token: " + data.token))
+      .catch(err => console.error(err));
+    }
+
+    function login() {
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('logEmail').value,
+          password: document.getElementById('logPass').value
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        token = data.token;
+        localStorage.setItem("token", token);
+        document.getElementById("tokenBox").innerText = "Token: " + token;
+        alert("Login successful!");
+      });
+    }
+
+    function getProfile() {
+      fetch('/api/users/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(user => {
+        document.getElementById("userInfo").innerHTML = `
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <img src="${user.profilePic || ''}" width="100" alt="Profile Picture"/>
+        `;
+      });
+    }
+
+    function updateUser() {
+      fetch('/api/users/update', {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: document.getElementById('updateName').value,
+          email: document.getElementById('updateEmail').value,
+          password: document.getElementById('updatePass').value
+        })
+      })
+      .then(res => res.text())
+      .then(msg => alert(msg));
+    }
+
+    function uploadProfilePic() {
+      const file = document.getElementById('profilePic').files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      fetch("/api/users/upload-photo", {
+        method: "POST",
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: formData
+      })
+      .then(res => res.text())
+      .then(msg => alert(msg));
+    }
+
+    function uploadFile() {
+      const file = document.getElementById('uploadFile').files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      fetch("/api/files/upload", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text())
+      .then(path => {
+        document.getElementById("uploadStatus").innerText = "Uploaded: " + path;
+        document.getElementById("mediaPath").value = path;
+      });
+    }
+
+    function createJournal() {
+      const userId = document.getElementById("userId").value;
+      fetch(`/api/journals/create/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          title: document.getElementById('journalTitle').value,
+          content: document.getElementById('journalContent').value,
+          mood: document.getElementById('journalMood').value,
+          tags: document.getElementById('journalTags').value,
+          date: document.getElementById('journalDate').value,
+          mediaPath: document.getElementById('mediaPath').value
+        })
+      })
+      .then(res => res.json())
+      .then(entry => {
+        alert("Journal created: " + entry.title);
+      });
+    }
+
+    function getJournals() {
+      const userId = document.getElementById("fetchUserId").value;
+      fetch(`/api/journals/user/${userId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(journals => {
+        const div = document.getElementById("journals");
+        div.innerHTML = "";
+        journals.forEach(j => {
+          div.innerHTML += `
+            <div class="journal">
+              <h3>${j.title}</h3>
+              <p>${j.content}</p>
+              <p><strong>Mood:</strong> ${j.mood}</p>
+              <p><strong>Date:</strong> ${j.date}</p>
+              ${j.mediaPath ? `<a href="${j.mediaPath}" target="_blank">📎 File</a>` : ""}
+              <button onclick="deleteJournal(${j.id})">🗑 Delete</button>
+            </div>
+          `;
+        });
+      });
+    }
+
+    function deleteJournal(id) {
+      fetch(`/api/journals/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(() => {
+        alert("Journal deleted");
+        getJournals();
+      });
+    }
+</script>
+</body>
+</html>
