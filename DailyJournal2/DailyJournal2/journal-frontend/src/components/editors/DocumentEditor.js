@@ -91,6 +91,7 @@ const DocumentEditor = ({ content, onChange, readOnly = false }) => {
   const [shapeRotation, setShapeRotation] = useState(0);
   const [shapeBorderWidth, setShapeBorderWidth] = useState(2);
   const [shapeFillOpacity, setShapeFillOpacity] = useState(0.2);
+  const [shapeFormatDialog, setShapeFormatDialog] = useState(false);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -2140,7 +2141,7 @@ const DocumentEditor = ({ content, onChange, readOnly = false }) => {
           const container = table.closest('.table-container');
           
           // Make table draggable and resizable
-          makeDraggableAndResizable(container, table);
+          // makeDraggableAndResizable(container, table);
           
           container.addEventListener('mouseenter', () => {
             // Show table controls

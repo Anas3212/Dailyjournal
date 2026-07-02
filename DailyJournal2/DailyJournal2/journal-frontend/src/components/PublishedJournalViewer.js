@@ -71,8 +71,6 @@ function PublishedJournalViewer({
   const [imagePreview, setImagePreview] = useState({ open: false, url: '', title: '' });
   const [pdfPreview, setPdfPreview] = useState({ open: false, url: '', title: '' });
 
-  if (!entry) return null;
-
   // Fetch journal stats when component opens
   useEffect(() => {
     if (open && entry?.id) {
@@ -312,6 +310,8 @@ function PublishedJournalViewer({
     if (!name) return '?';
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
   };
+
+  if (!entry) return null;
 
   return (
     <Dialog
