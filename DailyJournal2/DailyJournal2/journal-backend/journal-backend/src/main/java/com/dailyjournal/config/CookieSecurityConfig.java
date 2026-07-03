@@ -84,6 +84,8 @@ public class CookieSecurityConfig {
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
+                // Return 401 Unauthorized instead of 403 Forbidden for missing credentials
+                .exceptionHandling(e -> e.authenticationEntryPoint(new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)))
                 // Use the enhanced filter that supports both cookie and header authentication
                 .addFilterBefore(cookieJWTFilter, UsernamePasswordAuthenticationFilter.class);
 

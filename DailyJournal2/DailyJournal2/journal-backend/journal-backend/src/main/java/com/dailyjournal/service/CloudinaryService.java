@@ -89,6 +89,10 @@ public class CloudinaryService {
         return cloudinaryEnabled;
     }
 
+    public String getCloudName() {
+        return cloudName;
+    }
+
     // ---- private helpers ----
 
     private String uploadToCloudinary(MultipartFile file) throws IOException {

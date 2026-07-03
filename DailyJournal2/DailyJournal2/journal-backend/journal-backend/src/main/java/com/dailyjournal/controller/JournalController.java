@@ -42,6 +42,7 @@ public class JournalController {
     private final JournalMapper journalMapper; // ✅ Injected instance
     private final UserRepository userRepo;
     private final JournalRepository journalRepo;
+    private final com.dailyjournal.service.CloudinaryService cloudinaryService;
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/create/{userId}")
@@ -194,6 +195,23 @@ public class JournalController {
         Resource resource = new UrlResource(path.toUri());
 
         if (!resource.exists() || !resource.isReadable()) {
+            if (cloudinaryService.isCloudinaryEnabled()) {
+                String cloudName = cloudinaryService.getCloudName();
+                if (cloudName != null) {
+                    String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+                    String resourceType = (ext.equals("mp4") || ext.equals("webm") || ext.equals("ogg")) ? "video" : "image";
+                    // Note: If Cloudinary uploaded it in a specific folder, e.g. "journal-media", we prepend it here.
+                    // The old upload logic used "journal-media" folder.
+                    String publicIdPath = filename;
+                    if (!filename.contains("/")) {
+                        publicIdPath = "journal-media/" + filename;
+                    }
+                    String cUrl = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/" + publicIdPath;
+                    return ResponseEntity.status(HttpStatus.FOUND)
+                            .location(URI.create(cUrl))
+                            .build();
+                }
+            }
             return ResponseEntity.notFound().build();
         }
 
