@@ -165,4 +165,15 @@ public class CloudinaryService {
             log.warn("Failed to delete local file: {}", filename);
         }
     }
+
+    /**
+     * Download content from a Cloudinary URL to proxy it through the backend.
+     * This avoids CORS issues when the frontend uses withCredentials: true.
+     */
+    public byte[] downloadFromUrl(String url) throws IOException {
+        java.net.URI cloudinaryUri = java.net.URI.create(url);
+        try (java.io.InputStream in = cloudinaryUri.toURL().openStream()) {
+            return in.readAllBytes();
+        }
+    }
 }

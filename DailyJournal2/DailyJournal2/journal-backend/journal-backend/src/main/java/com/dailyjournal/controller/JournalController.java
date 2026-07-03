@@ -47,30 +47,29 @@ public class JournalController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/create/{userId}")
     public ResponseEntity<JournalResponse> create(@PathVariable Long userId,
-                                                  @Valid @RequestBody JournalRequest req) {
+            @Valid @RequestBody JournalRequest req) {
         JournalEntry entry = journalService.create(userId, req);
         return ResponseEntity.ok(journalMapper.toResponse(entry)); // ✅ instance method
     }
-
-
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<JournalResponse>> getAll(@PathVariable Long userId, HttpServletRequest request) {
         // ✅ Get current user from Security Context (works with cookies)
         Long currentUserId = SecurityUtils.getCurrentUserId();
-        
+
         List<JournalEntry> entries = journalService.getAllByUser(userId);
-        
-        // If the current user is not the owner of the journals and not an admin, filter out private journals
-        if (!currentUserId.equals(userId) && 
-            !userRepo.findById(currentUserId).orElseThrow().getRoles().stream()
-                .anyMatch(r -> r.getName().equals("ROLE_ADMIN"))) {
+
+        // If the current user is not the owner of the journals and not an admin, filter
+        // out private journals
+        if (!currentUserId.equals(userId) &&
+                !userRepo.findById(currentUserId).orElseThrow().getRoles().stream()
+                        .anyMatch(r -> r.getName().equals("ROLE_ADMIN"))) {
             entries = entries.stream()
                     .filter(entry -> !entry.isPrivate())
                     .collect(Collectors.toList());
         }
-        
+
         List<JournalResponse> response = entries.stream()
                 .map(journalMapper::toResponse)
                 .collect(Collectors.toList());
@@ -138,7 +137,7 @@ public class JournalController {
 
     // ===== PUBLIC JOURNAL ENDPOINTS =====
     // These endpoints return only public journals for user search and viewing
-    
+
     @GetMapping("/public/user/{userId}")
     public ResponseEntity<List<JournalResponse>> getPublicJournalsByUser(@PathVariable Long userId) {
         List<JournalEntry> entries = journalService.getPublicJournalsByUser(userId);
@@ -147,7 +146,7 @@ public class JournalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/public/search")
     public ResponseEntity<List<JournalResponse>> searchPublicJournals(
             @RequestParam Long userId,
@@ -163,7 +162,7 @@ public class JournalController {
 
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/public/calendar")
     public ResponseEntity<List<JournalResponse>> getPublicJournalsByDateRange(
             @RequestParam Long userId,
@@ -179,78 +178,131 @@ public class JournalController {
     }
 
     @GetMapping("/media/{filename:.+}")
-    public ResponseEntity<?> getMedia(@PathVariable String filename) throws IOException {
-        // Enforce access: owner, admin, public, or team member of the journal containing this media
-        journalService.assertCanAccessMediaByFilename(filename);
+    public ResponseEntity<?> getMedia(@PathVariable String filename, HttpServletRequest request) throws IOException {
+        try {
+            // Enforce access: owner, admin, public, or team member of the journal
+            // containing this media
+            journalService.assertCanAccessMediaByFilename(filename);
 
-        // If the stored path is a full Cloudinary URL, redirect to it
-        if (filename.startsWith("http://") || filename.startsWith("https://")) {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(filename))
-                    .build();
-        }
+            // If the stored path is a full Cloudinary URL, redirect to it
+            if (filename.startsWith("http://") || filename.startsWith("https://")) {
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create(filename))
+                        .build();
+            }
 
-        // Fallback: serve from local disk (local dev mode)
-        Path path = Paths.get("uploads").resolve(filename);
-        Resource resource = new UrlResource(path.toUri());
+            // Try to serve from local disk first (local dev mode)
+            Path path = Paths.get("uploads").resolve(filename);
+            Resource resource = new UrlResource(path.toUri());
 
-        if (!resource.exists() || !resource.isReadable()) {
+            if (resource.exists() && resource.isReadable()) {
+                // Determine content type based on file extension
+                String contentType = "application/octet-stream";
+                String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+
+                switch (extension) {
+                    case "pdf":
+                        contentType = "application/pdf";
+                        break;
+                    case "jpg":
+                    case "jpeg":
+                        contentType = "image/jpeg";
+                        break;
+                    case "png":
+                        contentType = "image/png";
+                        break;
+                    case "gif":
+                        contentType = "image/gif";
+                        break;
+                    case "mp4":
+                        contentType = "video/mp4";
+                        break;
+                    case "mp3":
+                        contentType = "audio/mpeg";
+                        break;
+                }
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE, contentType)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                        .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                        .header("Pragma", "no-cache")
+                        .header("Expires", "0")
+                        .body(resource);
+            }
+
+            // If local file not found, try Cloudinary
             if (cloudinaryService.isCloudinaryEnabled()) {
                 String cloudName = cloudinaryService.getCloudName();
                 if (cloudName != null) {
-                    String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-                    String resourceType = (ext.equals("mp4") || ext.equals("webm") || ext.equals("ogg")) ? "video" : "image";
-                    // Note: If Cloudinary uploaded it in a specific folder, e.g. "journal-media", we prepend it here.
-                    // The old upload logic used "journal-media" folder.
+                    String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+                    String resourceType = (extension.equals("mp4") || extension.equals("webm") || extension.equals("ogg")) ? "video"
+                            : (extension.equals("pdf") ? "raw" : "image");
+                    
+                    // Note: If Cloudinary uploaded it in a specific folder, e.g. "journal-media",
+                    // we prepend it here.
                     String publicIdPath = filename;
                     if (!filename.contains("/")) {
                         publicIdPath = "journal-media/" + filename;
                     }
-                    String cUrl = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/" + publicIdPath;
-                    return ResponseEntity.status(HttpStatus.FOUND)
-                            .location(URI.create(cUrl))
-                            .build();
+                    
+                    // Build Cloudinary URL with proper resource type
+                    String cUrl = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/"
+                            + publicIdPath;
+                    
+                    // Instead of redirecting (which causes CORS issues), proxy the content
+                    try {
+                        byte[] content = cloudinaryService.downloadFromUrl(cUrl);
+                        String contentType = "application/octet-stream";
+                        switch (extension) {
+                            case "pdf":
+                                contentType = "application/pdf";
+                                break;
+                            case "jpg":
+                            case "jpeg":
+                                contentType = "image/jpeg";
+                                break;
+                            case "png":
+                                contentType = "image/png";
+                                break;
+                            case "gif":
+                                contentType = "image/gif";
+                                break;
+                            case "mp4":
+                                contentType = "video/mp4";
+                                break;
+                            case "mp3":
+                                contentType = "audio/mpeg";
+                                break;
+                        }
+                        
+                        return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_TYPE, contentType)
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                                .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                                .header("Pragma", "no-cache")
+                                .header("Expires", "0")
+                                .body(content);
+                    } catch (Exception e) {
+                        System.out.println("Failed to download from Cloudinary: " + e.getMessage());
+                        return ResponseEntity.notFound().build();
+                    }
                 }
             }
+            
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            System.out.println("Error serving media: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error serving media: " + e.getMessage());
         }
-
-        // Determine content type based on file extension
-        String contentType = "application/octet-stream";
-        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-        
-        switch (extension) {
-            case "pdf":
-                contentType = "application/pdf";
-                break;
-            case "jpg":
-            case "jpeg":
-                contentType = "image/jpeg";
-                break;
-            case "png":
-                contentType = "image/png";
-                break;
-            case "gif":
-                contentType = "image/gif";
-                break;
-            case "mp4":
-                contentType = "video/mp4";
-                break;
-            case "mp3":
-                contentType = "audio/mpeg";
-                break;
-        }
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, contentType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
-                .body(resource);
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/{journalId}/upload")
     public ResponseEntity<?> uploadMultipleFiles(@PathVariable Long journalId,
-                                                 @RequestParam("files") MultipartFile[] files) {
+            @RequestParam("files") MultipartFile[] files) {
         try {
             if (files == null || files.length == 0) {
                 return ResponseEntity.badRequest().body("No files provided.");
@@ -277,8 +329,7 @@ public class JournalController {
             @RequestParam(required = false) String mood,
             @RequestParam(required = false) String tags,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         // ✅ Get current user from Security Context (works with cookies)
         Long userId = SecurityUtils.getCurrentUserId();
 
@@ -292,13 +343,13 @@ public class JournalController {
 
         return ResponseEntity.ok(response);
     }
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping({ "/{journalId}/media/{filename:.+}", "/{journalId}/media" })
     public ResponseEntity<?> deleteMedia(
             @PathVariable Long journalId,
             @PathVariable(required = false) String filename,
-            @RequestParam(value = "fileUrl", required = false) String fileUrl
-    ) {
+            @RequestParam(value = "fileUrl", required = false) String fileUrl) {
         try {
             String targetFile = fileUrl != null ? fileUrl : filename;
             if (targetFile == null || targetFile.trim().isEmpty()) {
@@ -312,8 +363,9 @@ public class JournalController {
     }
 
     // ===== PUBLISHED JOURNAL ENDPOINTS =====
-    // These endpoints handle published journals that any authenticated user can view
-    
+    // These endpoints handle published journals that any authenticated user can
+    // view
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/published")
     public ResponseEntity<List<JournalResponse>> getAllPublishedJournals() {
@@ -323,29 +375,28 @@ public class JournalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/published/search")
     public ResponseEntity<List<JournalResponse>> searchPublishedJournals(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String mood,
             @RequestParam(required = false) String tags,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<JournalEntry> entries = journalService.searchPublishedJournals(search, mood, tags, date);
         List<JournalResponse> response = entries.stream()
                 .map(journalMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/{journalId}/publish")
     public ResponseEntity<JournalResponse> publishJournal(@PathVariable Long journalId) {
         JournalEntry entry = journalService.publishJournal(journalId);
         return ResponseEntity.ok(journalMapper.toResponse(entry));
     }
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/{journalId}/unpublish")
     public ResponseEntity<JournalResponse> unpublishJournal(@PathVariable Long journalId) {
@@ -365,8 +416,7 @@ public class JournalController {
     @PostMapping("/published/{journalId}/react")
     public ResponseEntity<PublishedStatsResponse> toggleReaction(
             @PathVariable Long journalId,
-            @RequestParam("type") ReactionType type
-    ) {
+            @RequestParam("type") ReactionType type) {
         PublishedStatsResponse stats = journalService.toggleReaction(journalId, type);
         return ResponseEntity.ok(stats);
     }
@@ -384,10 +434,11 @@ public class JournalController {
         Map<Long, PublishedStatsResponse> stats = journalService.getBatchPublishedStats(request.getIds());
         return ResponseEntity.ok(stats);
     }
-    
+
     // ===== ADMIN ENDPOINTS FOR ALL EVER-PUBLISHED JOURNALS =====
-    // These endpoints show all journals that were ever published (including hidden ones) for admin moderation
-    
+    // These endpoints show all journals that were ever published (including hidden
+    // ones) for admin moderation
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/published")
     public ResponseEntity<List<JournalResponse>> getAllEverPublishedJournalsForAdmin() {
@@ -397,29 +448,28 @@ public class JournalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
-    
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/published/search")
     public ResponseEntity<List<JournalResponse>> searchAllEverPublishedJournalsForAdmin(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String mood,
             @RequestParam(required = false) String tags,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<JournalEntry> entries = journalService.searchAllEverPublishedJournalsForAdmin(search, mood, tags, date);
         List<JournalResponse> response = entries.stream()
                 .map(journalMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
-    
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/{journalId}/restore")
     public ResponseEntity<JournalResponse> restoreJournal(@PathVariable Long journalId) {
         JournalEntry entry = journalService.restoreJournal(journalId);
         return ResponseEntity.ok(journalMapper.toResponse(entry));
     }
-    
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/{journalId}/hide")
     public ResponseEntity<JournalResponse> hideJournalByAdmin(@PathVariable Long journalId) {
@@ -429,28 +479,28 @@ public class JournalController {
 
     // ===== JOURNAL LOCK ENDPOINTS =====
     // These endpoints handle journal editing locks to prevent concurrent edits
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/{journalId}/lock")
     public ResponseEntity<String> acquireJournalLock(@PathVariable Long journalId, @RequestParam String sessionId) {
         // For now, just return success - implement proper locking later if needed
         return ResponseEntity.ok("Lock acquired");
     }
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping("/{journalId}/lock")
     public ResponseEntity<String> releaseJournalLock(@PathVariable Long journalId) {
         // For now, just return success - implement proper locking later if needed
         return ResponseEntity.ok("Lock released");
     }
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping("/{journalId}/lock")
     public ResponseEntity<String> extendJournalLock(@PathVariable Long journalId, @RequestParam String sessionId) {
         // For now, just return success - implement proper locking later if needed
         return ResponseEntity.ok("Lock extended");
     }
-    
+
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/{journalId}/lock/status")
     public ResponseEntity<String> checkJournalLockStatus(@PathVariable Long journalId) {

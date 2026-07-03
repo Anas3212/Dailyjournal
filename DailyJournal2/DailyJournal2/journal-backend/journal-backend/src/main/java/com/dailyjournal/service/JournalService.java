@@ -579,35 +579,41 @@ public class JournalService {
     // Validate access for serving media by filename (local disk mode only —
     // Cloudinary URLs are served directly from Cloudinary, not via this endpoint)
     public JournalEntry assertCanAccessMediaByFilename(String filename) {
-        // Try exact match first (local filename), then try as a URL suffix
-        JournalEntry entry = journalRepo.findByMediaFilename(filename)
-                .or(() -> journalRepo.findByMediaFilenameContaining(filename))
-                .orElseThrow(() -> new NotFoundException("Media not found"));
+        try {
+            // Try exact match first (local filename), then try as a URL suffix
+            JournalEntry entry = journalRepo.findByMediaFilename(filename)
+                    .or(() -> journalRepo.findByMediaFilenameContaining(filename))
+                    .orElseThrow(() -> new NotFoundException("Media not found: " + filename));
 
-        User currentUser = getCurrentUserIfAny();
-        boolean isPublic = !entry.isPrivate();
-        boolean isPublished = entry.isPublished() && !entry.isHiddenByAdmin();
-        
-        // Published journals are accessible to everyone
-        if (isPublished) {
+            User currentUser = getCurrentUserIfAny();
+            boolean isPublic = !entry.isPrivate();
+            boolean isPublished = entry.isPublished() && !entry.isHiddenByAdmin();
+            
+            // Published journals are accessible to everyone
+            if (isPublished) {
+                return entry;
+            }
+            
+            if (currentUser == null) {
+                if (!isPublic) throw new ForbiddenException("Not authorized to access this media");
+                return entry;
+            }
+
+            User owner = entry.getUser();
+            boolean isOwner = currentUser.getId().equals(owner.getId());
+            boolean isAdmin = currentUser.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
+            Long teamId = entry.getTeam() != null ? entry.getTeam().getId() : null;
+            boolean teamOk = hasTeamAccess(teamId, currentUser.getId());
+
+            if (!(isOwner || isAdmin || isPublic || teamOk)) {
+                throw new ForbiddenException("Not authorized to access this media");
+            }
             return entry;
+        } catch (Exception e) {
+            System.out.println("Error in assertCanAccessMediaByFilename: " + e.getMessage());
+            e.printStackTrace();
+            throw new NotFoundException("Media not found: " + filename);
         }
-        
-        if (currentUser == null) {
-            if (!isPublic) throw new ForbiddenException("Not authorized to access this media");
-            return entry;
-        }
-
-        User owner = entry.getUser();
-        boolean isOwner = currentUser.getId().equals(owner.getId());
-        boolean isAdmin = currentUser.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        Long teamId = entry.getTeam() != null ? entry.getTeam().getId() : null;
-        boolean teamOk = hasTeamAccess(teamId, currentUser.getId());
-
-        if (!(isOwner || isAdmin || isPublic || teamOk)) {
-            throw new ForbiddenException("Not authorized to access this media");
-        }
-        return entry;
     }
 
     // ===== VIEWS & REACTIONS FOR PUBLISHED JOURNALS =====
