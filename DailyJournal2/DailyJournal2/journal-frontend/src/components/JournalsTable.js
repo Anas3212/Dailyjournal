@@ -112,7 +112,7 @@ const JournalsTable = () => {
     if (searchTerm) {
       filteredJournals = filteredJournals.filter(journal => 
         (journal.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (journal.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (journal.pages && journal.pages.some(page => (page || '').toLowerCase().includes(searchTerm.toLowerCase()))) ||
         (journal.user?.name || 'Unknown').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -297,7 +297,7 @@ const JournalsTable = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} md={8}>
                   <Typography variant="h6">Content</Typography>
-                  <Typography>{selectedJournal.content || 'No content available'}</Typography>
+                  <Typography>{(selectedJournal.pages && selectedJournal.pages.length > 0) ? selectedJournal.pages[0] : (selectedJournal.content || 'No content available')}</Typography>
                   
                   <Typography variant="h6" sx={{ mt: 2 }}>Details</Typography>
                   <Typography>Date: {selectedJournal.date ? new Date(selectedJournal.date).toLocaleDateString() : 'N/A'}</Typography>

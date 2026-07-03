@@ -64,7 +64,7 @@ public interface JournalRepository extends JpaRepository<JournalEntry, Long> {
       AND (
          :search IS NULL 
          OR LOWER(j.title) LIKE LOWER(CONCAT('%', :search, '%'))
-         OR j.content LIKE CONCAT('%', :search, '%')
+         OR LOWER(j.content) LIKE LOWER(CONCAT('%', :search, '%'))
          OR EXISTS (SELECT 1 FROM j.pages p WHERE LOWER(p) LIKE LOWER(CONCAT('%', :search, '%')))
          OR LOWER(j.tags) LIKE LOWER(CONCAT('%', :search, '%'))
       )
@@ -88,7 +88,7 @@ public interface JournalRepository extends JpaRepository<JournalEntry, Long> {
       AND (
          :search IS NULL 
          OR LOWER(j.title) LIKE LOWER(CONCAT('%', :search, '%'))
-         OR j.content LIKE CONCAT('%', :search, '%')
+         OR LOWER(j.content) LIKE LOWER(CONCAT('%', :search, '%'))
          OR EXISTS (SELECT 1 FROM j.pages p WHERE LOWER(p) LIKE LOWER(CONCAT('%', :search, '%')))
          OR LOWER(j.tags) LIKE LOWER(CONCAT('%', :search, '%'))
       )
@@ -128,7 +128,7 @@ public interface JournalRepository extends JpaRepository<JournalEntry, Long> {
       AND (
          :search IS NULL 
          OR LOWER(j.title) LIKE LOWER(CONCAT('%', :search, '%'))
-         OR j.content LIKE CONCAT('%', :search, '%')
+         OR LOWER(j.content) LIKE LOWER(CONCAT('%', :search, '%'))
          OR EXISTS (SELECT 1 FROM j.pages p WHERE LOWER(p) LIKE LOWER(CONCAT('%', :search, '%')))
          OR LOWER(j.tags) LIKE LOWER(CONCAT('%', :search, '%'))
          OR LOWER(j.user.name) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -179,7 +179,7 @@ public interface JournalRepository extends JpaRepository<JournalEntry, Long> {
       AND (
          :search IS NULL 
          OR LOWER(j.title) LIKE LOWER(CONCAT('%', :search, '%'))
-         OR j.content LIKE CONCAT('%', :search, '%')
+         OR LOWER(j.content) LIKE LOWER(CONCAT('%', :search, '%'))
          OR EXISTS (SELECT 1 FROM j.pages p WHERE LOWER(p) LIKE LOWER(CONCAT('%', :search, '%')))
          OR LOWER(j.tags) LIKE LOWER(CONCAT('%', :search, '%'))
          OR LOWER(j.user.name) LIKE LOWER(CONCAT('%', :search, '%'))

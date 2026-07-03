@@ -210,9 +210,9 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                               color="secondary"
                             />
                           )}
-                          {journal.content && (
+                          {(journal.pages?.length > 0 || journal.content) && (
                             <Chip
-                              label={`${journal.content.length} chars`}
+                              label={`${journal.pages?.length > 0 ? journal.pages.reduce((acc, p) => acc + (p?.length || 0), 0) : journal.content.length} chars`}
                               size="small"
                               variant="outlined"
                             />
@@ -234,7 +234,7 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                           </Stack>
                         )}
 
-                        {journal.content && (
+                        {(journal.pages?.length > 0 || journal.content) && (
                           <Typography 
                             variant="body2" 
                             color="text.secondary" 
@@ -243,7 +243,7 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                               fontFamily: 'monospace'
                             }}
                           >
-                            {formatContentPreview(journal.content)}
+                            {formatContentPreview((journal.pages && journal.pages.length > 0) ? journal.pages[0] : journal.content)}
                           </Typography>
                         )}
                       </Card>
