@@ -46,6 +46,8 @@ import {
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import DiscussionSection from './DiscussionSection';
+import { getFileType as getFileTypeUtil, extractFilename } from '../utils/fileUtils';
+import { downloadFile } from '../utils/fileDownload';
 
 function PublishedJournalViewer({ 
   open, 
@@ -224,40 +226,8 @@ function PublishedJournalViewer({
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
-      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
-      
-      if (isCloudinary) {
-        let downloadUrl = fullUrl;
-        if (!fullUrl.includes('/raw/upload/')) {
-          downloadUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
-        }
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.target = '_blank';
-        link.download = url.split('/').pop().split('?')[0];
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return;
-      }
-      const response = await fetch(fullUrl, {
-        credentials: isCloudinary ? 'omit' : 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to download file');
-      }
-      
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = url.split('/').pop();
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      const fileName = extractFilename(url);
+      await downloadFile(fullUrl, fileName);
     } catch (error) {
       console.error('Download error:', error);
     }
@@ -302,14 +272,8 @@ function PublishedJournalViewer({
     return <DocumentIcon />;
   };
 
-  const getFileType = (url) => {
-    const extension = url.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) return 'image';
-    if (['mp4', 'avi', 'mov', 'wmv'].includes(extension)) return 'video';
-    if (['mp3', 'wav', 'ogg'].includes(extension)) return 'audio';
-    if (extension === 'pdf') return 'pdf';
-    return 'document';
-  };
+  // Delegates to shared utility from '../utils/fileUtils'
+  const getFileType = (url) => getFileTypeUtil(url);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);

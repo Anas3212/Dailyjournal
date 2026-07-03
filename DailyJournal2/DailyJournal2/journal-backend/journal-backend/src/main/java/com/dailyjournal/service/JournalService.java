@@ -30,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -430,22 +432,49 @@ public class JournalService {
         }
     }
 
-    public void deleteMediaFromJournal(Long journalId, String filename) {
+    public void deleteMediaFromJournal(Long journalId, String fileIdentifier) {
         JournalEntry entry = journalRepo.findById(journalId)
                 .orElseThrow(() -> new NotFoundException("Journal not found"));
         checkAdminEditorOrMasterOnly(getCurrentUser(), entry);
 
         List<String> mediaPaths = entry.getMediaPaths();
-        if (mediaPaths == null || !mediaPaths.contains(filename)) {
+        if (mediaPaths == null) {
             throw new NotFoundException("Media not found in this journal.");
         }
 
-        mediaPaths.remove(filename);
+        // Normalize the requested fileIdentifier
+        String targetFilename = extractFilename(fileIdentifier);
+        
+        String matchedPath = null;
+        for (String storedPath : mediaPaths) {
+            if (extractFilename(storedPath).equals(targetFilename)) {
+                matchedPath = storedPath;
+                break;
+            }
+        }
+
+        if (matchedPath == null) {
+            throw new NotFoundException("Media not found in this journal.");
+        }
+
+        mediaPaths.remove(matchedPath);
         entry.setMediaPaths(mediaPaths);
         journalRepo.save(entry);
 
         // Delete from Cloudinary (or local disk in local dev mode)
-        cloudinaryService.delete(filename);
+        cloudinaryService.delete(targetFilename);
+    }
+
+    private String extractFilename(String identifier) {
+        if (identifier == null) return "";
+        try {
+            String decoded = URLDecoder.decode(identifier, StandardCharsets.UTF_8.name());
+            String noQuery = decoded.split("\\?")[0];
+            String[] parts = noQuery.split("/");
+            return parts[parts.length - 1];
+        } catch (Exception e) {
+            return identifier;
+        }
     }
 
     // ===== PUBLIC JOURNAL METHODS =====

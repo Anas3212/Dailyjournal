@@ -22,6 +22,8 @@ import api from '../services/api';
 import { uploadJournalFiles, deleteJournalFile } from '../services/api';
 import JournalEditor from './JournalEditor';
 import MediaViewer from './MediaViewer';
+import { extractFilename } from '../utils/fileUtils';
+import { downloadFile as downloadFileUtil } from '../utils/fileDownload';
 
 const JournalsTable = () => {
   const [journals, setJournals] = useState([]);
@@ -498,32 +500,15 @@ const JournalsTable = () => {
   }
   
   // Helper function to download files as blobs
-  function downloadFile(url) {
-    const fullUrl = getFullFileUrl(url);
-    const filename = url.split('/').pop().split('?')[0];
-    // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
-    const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
-    fetch(fullUrl, {
-      method: 'GET',
-      credentials: isCloudinary ? 'omit' : 'include',
-    })
-    .then(response => response.blob())
-    .then(blob => {
-      // Create a blob URL and trigger download
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      // Clean up
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-    })
-    .catch(error => {
+  async function downloadFile(url) {
+    try {
+      const fullUrl = getFullFileUrl(url);
+      const fileName = extractFilename(url);
+      await downloadFileUtil(fullUrl, fileName);
+    } catch (error) {
       console.error('Error downloading file:', error);
       alert('Error downloading file. Please try again.');
-    });
+    }
   }
 
   async function handleAddFile(journalId, e) {
@@ -561,10 +546,9 @@ const JournalsTable = () => {
 
   async function handleDeleteFile(journalId, url) {
     try {
-      const filename = url.includes('/api/journals/media/') 
-        ? url.split('/').pop().split('?')[0] 
-        : url;
-      await deleteJournalFile(journalId, filename);
+      // Pass raw URL, only stripping cache buster
+      const fileIdentifier = url.split('?')[0];
+      await deleteJournalFile(journalId, fileIdentifier);
       // Refresh the journal data
       fetchJournals();
     } catch (error) {

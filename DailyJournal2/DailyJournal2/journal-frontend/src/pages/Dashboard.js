@@ -107,6 +107,8 @@ import UnpublishBeforeEditDialog from '../components/UnpublishBeforeEditDialog';
 import FolderCreateDialog from '../components/FolderCreateDialog';
 import FolderManagement from '../components/FolderManagement';
 import FolderJournalViewer from '../components/FolderJournalViewer';
+import { getFileType as getFileTypeUtil, extractFilename } from '../utils/fileUtils';
+import { downloadFile } from '../utils/fileDownload';
 import { 
   getCurrentUser, 
   getJournals, 
@@ -516,11 +518,10 @@ function Dashboard() {
   const handleDeleteFile = async (journalId, url) => {
     setLoading(true);
     try {
-      // If it's a local file, extract the filename. If it's Cloudinary, keep the full URL.
-      const filename = url.includes('/api/journals/media/') 
-        ? url.split('/').pop().split('?')[0] 
-        : url;
-      await deleteJournalFile(journalId, filename);
+      // Pass the raw URL exactly as stored in mediaUrls.
+      // Only strip cache-buster query params; the backend normalizes and matches.
+      const fileIdentifier = url.split('?')[0];
+      await deleteJournalFile(journalId, fileIdentifier);
       const res = await getJournal(journalId);
       setEntries(entries => entries.map(e => e.id === journalId ? res.data : e));
       if (viewingEntry && viewingEntry.id === journalId) setViewingEntry(res.data);
@@ -557,13 +558,8 @@ function Dashboard() {
     return <DocumentIcon />;
   };
 
-  const getFileType = (url) => {
-    const extension = url.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) return 'image';
-    if (['mp4', 'avi', 'mov', 'wmv'].includes(extension)) return 'video';
-    if (['mp3', 'wav', 'ogg'].includes(extension)) return 'audio';
-    return 'document';
-  };
+  // Delegates to shared utility from '../utils/fileUtils'
+  const getFileType = (url) => getFileTypeUtil(url);
 
   // Normalize any malformed media URLs/paths that may include duplicated prefixes
   // Examples it fixes:
@@ -756,41 +752,8 @@ function Dashboard() {
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
-      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
-      
-      if (isCloudinary) {
-        let downloadUrl = fullUrl;
-        if (!fullUrl.includes('/raw/upload/')) {
-          downloadUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
-        }
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.target = '_blank';
-        link.download = url.split('/').pop().split('?')[0];
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return;
-      }
-      const response = await fetch(fullUrl, {
-        credentials: isCloudinary ? 'omit' : 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to download file');
-      }
-      
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = url.split('/').pop(); // Extract filename from URL
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      
+      const fileName = extractFilename(url);
+      await downloadFile(fullUrl, fileName);
       setSnackbar({ open: true, message: 'File downloaded successfully!', severity: 'success' });
     } catch (error) {
       console.error('Download error:', error);
@@ -992,6 +955,33 @@ function Dashboard() {
                         {mediaPlayer.playing ? <PauseIcon /> : <PlayArrowIcon />}
                       </IconButton>
                     </Box>
+                  </Box>
+                )}
+
+                {fileType === 'pdf' && (
+                  <Box sx={{ textAlign: 'center', p: 4 }}>
+                    <DocumentIcon sx={{ fontSize: 80, color: '#f44336', mb: 2 }} />
+                    <Typography variant="h6" gutterBottom>
+                      {extractFilename(currentFile)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      PDF Document
+                    </Typography>
+                    <Stack direction="row" spacing={2} justifyContent="center">
+                      <Button
+                        variant="contained"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => handleDownloadFile(currentFile)}
+                      >
+                        Download PDF
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={() => window.open(getFullFileUrl(currentFile), '_blank')}
+                      >
+                        Open in New Tab
+                      </Button>
+                    </Stack>
                   </Box>
                 )}
 

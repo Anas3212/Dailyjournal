@@ -40,6 +40,8 @@ import {
   ThumbUpAlt as ThumbUpIcon,
   ThumbDownAlt as ThumbDownIcon
 } from '@mui/icons-material';
+import { getFileType as getFileTypeUtil, extractFilename } from '../utils/fileUtils';
+import { downloadFile } from '../utils/fileDownload';
 
 function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, stats, onReact }) {
   if (!entry) return null;
@@ -47,40 +49,8 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
-      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
-
-      if (isCloudinary) {
-        let downloadUrl = fullUrl;
-        if (!fullUrl.includes('/raw/upload/')) {
-          downloadUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
-        }
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.target = '_blank';
-        link.download = url.split('/').pop().split('?')[0];
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return;
-      }
-      const response = await fetch(fullUrl, {
-        credentials: isCloudinary ? 'omit' : 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download file');
-      }
-
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = url.split('/').pop(); // Extract filename from URL
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      const fileName = extractFilename(url);
+      await downloadFile(fullUrl, fileName);
     } catch (error) {
       console.error('Download error:', error);
       alert('Failed to download file');
@@ -95,13 +65,8 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
     return <DocumentIcon />;
   };
 
-  const getFileType = (url) => {
-    const extension = url.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) return 'image';
-    if (['mp4', 'avi', 'mov', 'wmv'].includes(extension)) return 'video';
-    if (['mp3', 'wav', 'ogg'].includes(extension)) return 'audio';
-    return 'document';
-  };
+  // Delegates to shared utility from '../utils/fileUtils'
+  const getFileType = (url) => getFileTypeUtil(url);
 
   const getFullFileUrl = (url) => {
     // If the URL contains localhost:8080 (from old local testing), replace it with the real backend URL
@@ -109,7 +74,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com';
       url = url.replace('http://localhost:8080', backendUrl);
     }
-    
+
     if (url.startsWith('http')) return url;
     if (url.startsWith('/api/journals/media/')) return `${process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com'}${url}`;
     if (!url.startsWith('/')) return `${process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com'}/api/journals/media/${url}`;
@@ -542,6 +507,18 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                             >
                               <DownloadIcon fontSize="small" />
                             </IconButton>
+                            {onDeleteFile && (
+                              <IconButton
+                                size="small"
+                                onClick={() => onDeleteFile(entry.id, url)}
+                                sx={{
+                                  bgcolor: 'rgba(244, 67, 54, 0.1)',
+                                  '&:hover': { bgcolor: 'rgba(244, 67, 54, 0.2)' }
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
                           </Stack>
                         </Box>
                       </Grid>
