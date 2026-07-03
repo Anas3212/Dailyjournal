@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.*;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -46,6 +45,7 @@ public class JournalService {
     private final JournalViewRepository journalViewRepository;
     private final JournalReactionRepository journalReactionRepository;
     private final JournalEditorRepository journalEditorRepository;
+    private final CloudinaryService cloudinaryService;
 
     // 🔐 Get the current authenticated user
     private User getCurrentUser() {
@@ -379,7 +379,6 @@ public class JournalService {
                 .orElseThrow(() -> new NotFoundException("Journal not found"));
         checkAdminEditorOrMasterOnly(getCurrentUser(), entry);
 
-        String uploadDir = "uploads/";
         List<String> uploadedFilenames = new ArrayList<>();
 
         long totalSize = 0L;
@@ -395,7 +394,6 @@ public class JournalService {
         List<String> allowedExtensions = List.of("jpg", "jpeg", "png", "gif", "pdf", "mp3", "wav", "ogg");
 
         try {
-            Files.createDirectories(Paths.get(uploadDir));
             for (MultipartFile file : files) {
                 if (file.isEmpty()) continue;
 
@@ -416,10 +414,9 @@ public class JournalService {
                     throw new BadRequestException("Total upload size exceeds 10MB.");
                 }
 
-                String filename = UUID.randomUUID() + "_" + originalFilename;
-                Path filepath = Paths.get(uploadDir + filename);
-                file.transferTo(filepath);
-                uploadedFilenames.add(filename);
+                // Upload via CloudinaryService (persists to Cloudinary or local disk)
+                String storedPath = cloudinaryService.upload(file);
+                uploadedFilenames.add(storedPath);
             }
 
             existingPaths.addAll(uploadedFilenames);
@@ -447,12 +444,8 @@ public class JournalService {
         entry.setMediaPaths(mediaPaths);
         journalRepo.save(entry);
 
-        Path filePath = Paths.get("uploads").resolve(filename);
-        try {
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            throw new BadRequestException("Failed to delete file: " + filename);
-        }
+        // Delete from Cloudinary (or local disk in local dev mode)
+        cloudinaryService.delete(filename);
     }
 
     // ===== PUBLIC JOURNAL METHODS =====
@@ -583,9 +576,12 @@ public class JournalService {
         return journalRepo.save(journal);
     }
 
-    // Validate access for serving media by filename
+    // Validate access for serving media by filename (local disk mode only —
+    // Cloudinary URLs are served directly from Cloudinary, not via this endpoint)
     public JournalEntry assertCanAccessMediaByFilename(String filename) {
+        // Try exact match first (local filename), then try as a URL suffix
         JournalEntry entry = journalRepo.findByMediaFilename(filename)
+                .or(() -> journalRepo.findByMediaFilenameContaining(filename))
                 .orElseThrow(() -> new NotFoundException("Media not found"));
 
         User currentUser = getCurrentUserIfAny();

@@ -224,9 +224,10 @@ function UserJournals() {
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // ✅ Use cookies for authentication
+      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
       const response = await fetch(fullUrl, {
-        credentials: 'include'
+        credentials: isCloudinary ? 'omit' : 'include'
       });
       
       if (!response.ok) {

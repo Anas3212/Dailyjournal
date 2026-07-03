@@ -22,10 +22,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -176,9 +178,18 @@ public class JournalController {
     }
 
     @GetMapping("/media/{filename:.+}")
-    public ResponseEntity<Resource> getMedia(@PathVariable String filename) throws IOException {
+    public ResponseEntity<?> getMedia(@PathVariable String filename) throws IOException {
         // Enforce access: owner, admin, public, or team member of the journal containing this media
         journalService.assertCanAccessMediaByFilename(filename);
+
+        // If the stored path is a full Cloudinary URL, redirect to it
+        if (filename.startsWith("http://") || filename.startsWith("https://")) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(filename))
+                    .build();
+        }
+
+        // Fallback: serve from local disk (local dev mode)
         Path path = Paths.get("uploads").resolve(filename);
         Resource resource = new UrlResource(path.toUri());
 
@@ -229,8 +240,10 @@ public class JournalController {
 
             List<String> filenames = journalService.uploadMultipleMedia(journalId, files);
 
+            // Cloudinary uploads return full https:// URLs — return them as-is.
+            // Local-disk uploads return just a filename — wrap with /api/journals/media/.
             List<String> urls = filenames.stream()
-                    .map(name -> "/api/journals/media/" + name)
+                    .map(stored -> stored.startsWith("http") ? stored : "/api/journals/media/" + stored)
                     .toList();
 
             return ResponseEntity.ok(urls);
@@ -262,13 +275,18 @@ public class JournalController {
         return ResponseEntity.ok(response);
     }
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @DeleteMapping("/{journalId}/media/{filename:.+}")
+    @DeleteMapping({ "/{journalId}/media/{filename:.+}", "/{journalId}/media" })
     public ResponseEntity<?> deleteMedia(
             @PathVariable Long journalId,
-            @PathVariable String filename
+            @PathVariable(required = false) String filename,
+            @RequestParam(value = "fileUrl", required = false) String fileUrl
     ) {
         try {
-            journalService.deleteMediaFromJournal(journalId, filename);
+            String targetFile = fileUrl != null ? fileUrl : filename;
+            if (targetFile == null || targetFile.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("File URL or filename is required.");
+            }
+            journalService.deleteMediaFromJournal(journalId, targetFile);
             return ResponseEntity.ok("Media file deleted successfully.");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Something went wrong: " + e.getMessage());

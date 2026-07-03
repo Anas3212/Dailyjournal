@@ -30,33 +30,38 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
   
   // Helper function to download files as blobs
   const downloadFile = (url) => {
-    // Get the filename from the URL
-    const filename = url.split('/').pop();
-    // ✅ Use cookies for authentication
-    fetch(getFullMediaUrl(url), {
+    const fullUrl = getFullMediaUrl(url);
+    const filename = url.split('/').pop().split('?')[0]; // strip query params
+    const isCloudinaryUrl = fullUrl.startsWith('https://res.cloudinary.com');
+    
+    fetch(fullUrl, {
       method: 'GET',
-      credentials: 'include',
+      // Only send cookies for backend media endpoint, not for Cloudinary
+      credentials: isCloudinaryUrl ? 'omit' : 'include',
     })
-    .then(response => response.blob())
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to download file');
+      return response.blob();
+    })
     .then(blob => {
-      // Create a blob URL and trigger download
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      // Clean up
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
     })
     .catch(error => {
-      console.error('Error downloading file:', error);
-      alert('Error downloading file. Please try again.');
+      console.error('Download error:', error);
+      // Fallback: open in new tab
+      window.open(fullUrl, '_blank');
     });
   };
   
   const fullMediaUrl = getFullMediaUrl(mediaUrl);
+  const isCloudinaryUrl = fullMediaUrl.startsWith('https://res.cloudinary.com');
 
   // If image previews require auth, load as blob with Authorization
   useEffect(() => {
@@ -68,11 +73,14 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
     const isImg = lower.match(/\.(jpeg|jpg|gif|png|webp)$/) !== null;
     if (!isImg) return; // only blob-load images
 
+    const fullUrl = getFullMediaUrl(mediaUrl);
+    const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
+
     const controller = new AbortController();
-    // ✅ Use cookies for authentication
-    fetch(fullMediaUrl, {
+    fetch(fullUrl, {
       method: 'GET',
-      credentials: 'include',
+      // Cloudinary URLs are public — no credentials needed
+      credentials: isCloudinary ? 'omit' : 'include',
       signal: controller.signal,
     })
       .then(r => {

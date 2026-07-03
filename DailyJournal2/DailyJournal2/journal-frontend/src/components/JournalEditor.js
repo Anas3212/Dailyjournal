@@ -170,7 +170,11 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
       // Only add mediaPaths if we have media URLs to preserve
       if (initialData?.mediaUrls && initialData.mediaUrls.length > 0) {
         const mediaPaths = initialData.mediaUrls.map(url => {
-          // Extract filename from URL like: ${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/journals/media/filename.jpg
+          // Keep Cloudinary URLs completely intact
+          if (url.startsWith('http')) {
+            return url;
+          }
+          // Extract filename from local URL like: /api/journals/media/filename.jpg
           const parts = url.split('/');
           return parts[parts.length - 1]; // Get the last part (filename)
         });

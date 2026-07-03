@@ -499,12 +499,13 @@ const JournalsTable = () => {
   
   // Helper function to download files as blobs
   function downloadFile(url) {
-    // Get the filename from the URL
-    const filename = url.split('/').pop();
-    // Use cookies for authentication
-    fetch(getFullFileUrl(url), {
+    const fullUrl = getFullFileUrl(url);
+    const filename = url.split('/').pop().split('?')[0];
+    // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+    const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
+    fetch(fullUrl, {
       method: 'GET',
-      credentials: 'include',
+      credentials: isCloudinary ? 'omit' : 'include',
     })
     .then(response => response.blob())
     .then(blob => {
@@ -560,7 +561,9 @@ const JournalsTable = () => {
 
   async function handleDeleteFile(journalId, url) {
     try {
-      const filename = url.split('/').pop();
+      const filename = url.includes('/api/journals/media/') 
+        ? url.split('/').pop().split('?')[0] 
+        : url;
       await deleteJournalFile(journalId, filename);
       // Refresh the journal data
       fetchJournals();

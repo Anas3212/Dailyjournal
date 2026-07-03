@@ -516,7 +516,10 @@ function Dashboard() {
   const handleDeleteFile = async (journalId, url) => {
     setLoading(true);
     try {
-      const filename = url.split('/').pop();
+      // If it's a local file, extract the filename. If it's Cloudinary, keep the full URL.
+      const filename = url.includes('/api/journals/media/') 
+        ? url.split('/').pop().split('?')[0] 
+        : url;
       await deleteJournalFile(journalId, filename);
       const res = await getJournal(journalId);
       setEntries(entries => entries.map(e => e.id === journalId ? res.data : e));
@@ -620,9 +623,10 @@ function Dashboard() {
           setError(false);
           
           const fullUrl = getFullFileUrl(url);
-          // ✅ Use cookies for authentication
+          // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+          const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
           const response = await fetch(fullUrl, {
-            credentials: 'include'
+            credentials: isCloudinary ? 'omit' : 'include'
           });
 
           if (response.ok) {
@@ -752,9 +756,10 @@ function Dashboard() {
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // ✅ Use cookies for authentication
+      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
       const response = await fetch(fullUrl, {
-        credentials: 'include'
+        credentials: isCloudinary ? 'omit' : 'include'
       });
       
       if (!response.ok) {

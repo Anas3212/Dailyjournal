@@ -20,8 +20,8 @@ cookieApi.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // If we get 401 or 403 (expired tokens) and haven't already tried to refresh
-    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+    // Only retry on 401 (Unauthorized / token expired) — NOT 403 (Forbidden = permission denied)
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
@@ -147,7 +147,7 @@ export const uploadJournalMedia = (journalId, files) => {
 };
 
 export const deleteJournalMedia = (journalId, filename) =>
-  cookieApi.delete(`/journals/${journalId}/media/${filename}`);
+  cookieApi.delete(`/journals/${journalId}/media?fileUrl=${encodeURIComponent(filename)}`);
 
 // ===== TEAM ENDPOINTS =====
 

@@ -27,9 +27,13 @@ public interface JournalRepository extends JpaRepository<JournalEntry, Long> {
     // Team journals
     List<JournalEntry> findByTeam_Id(Long teamId);
 
-    // Media access: find journal by media filename
+    // Media access: find journal by exact media path (local filename or full Cloudinary URL)
     @Query("SELECT je FROM JournalEntry je JOIN je.mediaPaths mp WHERE mp = :filename")
     Optional<JournalEntry> findByMediaFilename(@Param("filename") String filename);
+
+    // Media access: fallback — find by filename suffix (handles path-prefixed filenames)
+    @Query("SELECT je FROM JournalEntry je JOIN je.mediaPaths mp WHERE mp LIKE CONCAT('%', :filename)")
+    Optional<JournalEntry> findByMediaFilenameContaining(@Param("filename") String filename);
 
     // ✅ Admin filter support
     List<JournalEntry> findByUser_NameContainingIgnoreCaseOrUser_EmailContainingIgnoreCase(String name, String email);

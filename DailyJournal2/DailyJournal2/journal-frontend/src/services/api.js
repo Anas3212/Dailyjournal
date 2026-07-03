@@ -32,8 +32,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // If we get 401 or 403 (expired tokens) and haven't already tried to refresh
-    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+    // Only retry on 401 (Unauthorized / token expired) — NOT 403 (Forbidden = permission denied)
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
@@ -155,7 +155,7 @@ export const uploadJournalFiles = async (journalId, files) => {
 };
 
 export const deleteJournalFile = (journalId, filename) =>
-  api.delete(`/journals/${journalId}/media/${encodeURIComponent(filename)}`);
+  api.delete(`/journals/${journalId}/media?fileUrl=${encodeURIComponent(filename)}`);
 
 export const searchUsers = (query) =>
   api.get(`/users/search?query=${encodeURIComponent(query)}`);

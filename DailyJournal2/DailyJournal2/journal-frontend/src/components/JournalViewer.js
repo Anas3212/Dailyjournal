@@ -47,9 +47,10 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // ✅ Use cookies for authentication
+      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
       const response = await fetch(fullUrl, {
-        credentials: 'include'
+        credentials: isCloudinary ? 'omit' : 'include'
       });
       
       if (!response.ok) {
@@ -108,9 +109,10 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
           
           const fullUrl = getFullFileUrl(url);
           
-          // ✅ Use cookies for authentication (works for both private and public)
+          // Cloudinary URLs are public CDN — no cookies needed (and would cause CORS error)
+          const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
           const response = await fetch(fullUrl, {
-            credentials: 'include'
+            credentials: isCloudinary ? 'omit' : 'include'
           });
 
           if (response.ok) {

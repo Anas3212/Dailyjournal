@@ -178,8 +178,9 @@ export default function TeamJournals() {
         if (getFileType(url) !== 'image') return;
         if (thumbs[url]) return;
         const full = getFullFileUrl(url);
-        // ✅ Use cookies for authentication
-        const res = await fetch(full, { credentials: 'include', signal: controller.signal });
+        const isCloudinary = full.startsWith('https://res.cloudinary.com');
+        // ✅ Use cookies for backend media; omit for Cloudinary CDN
+        const res = await fetch(full, { credentials: isCloudinary ? 'omit' : 'include', signal: controller.signal });
         if (!res.ok) return;
         const blob = await res.blob();
         const obj = URL.createObjectURL(blob);
@@ -463,7 +464,9 @@ export default function TeamJournals() {
   // File management functions
   const handleDeleteFile = async (journalId, url) => {
     try {
-      const filename = url.split('/').pop();
+      const filename = url.includes('/api/journals/media/') 
+        ? url.split('/').pop().split('?')[0] 
+        : url;
       await deleteJournalFile(journalId, filename);
       const res = await getJournal(journalId);
       setJournals(journals => journals.map(j => j.id === journalId ? res.data : j));
@@ -491,9 +494,10 @@ export default function TeamJournals() {
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = url.startsWith('http') ? url : `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}${url}`;
-      // ✅ Use cookies for authentication
+      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
       const response = await fetch(fullUrl, {
-        credentials: 'include'
+        credentials: isCloudinary ? 'omit' : 'include'
       });
       
       if (!response.ok) {

@@ -151,9 +151,10 @@ function PublishedJournalViewer({
           const fullUrl = getFullFileUrl(url);
           console.log('AuthenticatedImage: Full URL:', fullUrl);
           
-          // ✅ Use cookies for authentication
+          // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+          const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
           const response = await fetch(fullUrl, {
-            credentials: 'include'
+            credentials: isCloudinary ? 'omit' : 'include'
           });
           
           console.log('AuthenticatedImage: Response status:', response.status);
@@ -223,9 +224,10 @@ function PublishedJournalViewer({
   const handleDownloadFile = async (url) => {
     try {
       const fullUrl = getFullFileUrl(url);
-      // ✅ Use cookies for authentication
+      // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
+      const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
       const response = await fetch(fullUrl, {
-        credentials: 'include'
+        credentials: isCloudinary ? 'omit' : 'include'
       });
       
       if (!response.ok) {
