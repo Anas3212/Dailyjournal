@@ -474,7 +474,7 @@ const FolderJournalViewer = ({
                             overflow: 'hidden'
                           }}
                         >
-                          {truncateText(journal.content)}
+                          {truncateText((journal.pages && journal.pages.length > 0) ? journal.pages[0] : journal.content)}
                         </Typography>
 
                         {/* Tags */}

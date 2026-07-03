@@ -69,6 +69,13 @@ public class JournalMapper {
         resp.setEverPublished(entry.isEverPublished());
         resp.setHiddenByAdmin(entry.isHiddenByAdmin());
         resp.setMediaUrls(mediaUrls);
+        
+        if (entry.getPages() != null && !entry.getPages().isEmpty()) {
+            resp.setPages(entry.getPages());
+        } else {
+            resp.setPages(List.of(entry.getContent() != null ? entry.getContent() : ""));
+        }
+        
         resp.setUserId(userId);
         resp.setUserName(userName);
         resp.setUserEmail(userEmail);

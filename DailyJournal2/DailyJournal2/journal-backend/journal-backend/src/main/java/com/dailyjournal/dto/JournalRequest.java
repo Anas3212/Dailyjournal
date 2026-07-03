@@ -28,6 +28,8 @@ public class JournalRequest {
 
     private List<String> mediaPaths; // ✅ updated to support multiple files
 
+    private List<String> pages = new java.util.ArrayList<>(); // ✅ support multiple description pages
+
     // Optional: link this journal to a team the user belongs to
     private Long teamId;
 

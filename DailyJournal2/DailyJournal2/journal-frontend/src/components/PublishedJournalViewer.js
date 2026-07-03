@@ -42,7 +42,9 @@ import {
   ThumbUpAlt as ThumbUpIcon,
   ThumbDownAlt as ThumbDownIcon,
   Forum as ForumIcon,
-  Article as ArticleIcon
+  Article as ArticleIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import DiscussionSection from './DiscussionSection';
@@ -72,6 +74,14 @@ function PublishedJournalViewer({
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState({ open: false, url: '', title: '' });
   const [pdfPreview, setPdfPreview] = useState({ open: false, url: '', title: '' });
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+  // Reset page when entry changes
+  useEffect(() => {
+    setCurrentPageIndex(0);
+  }, [entry?.id]);
+
+  const pages = entry?.pages?.length > 0 ? entry.pages : [entry?.content || ''];
 
   // Fetch journal stats when component opens
   useEffect(() => {
@@ -414,7 +424,30 @@ function PublishedJournalViewer({
             <Box>
               {/* Journal Content */}
               <Card elevation={0} sx={{ mb: 3, bgcolor: 'white', borderRadius: 3 }}>
-                <CardContent sx={{ p: 4 }}>
+                <Box sx={{ p: 3, pb: 0, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  {pages.length > 1 && (
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <IconButton 
+                        onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
+                        disabled={currentPageIndex === 0}
+                        size="small"
+                      >
+                        <NavigateBeforeIcon />
+                      </IconButton>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        Page {currentPageIndex + 1} / {pages.length}
+                      </Typography>
+                      <IconButton 
+                        onClick={() => setCurrentPageIndex(p => Math.min(pages.length - 1, p + 1))}
+                        disabled={currentPageIndex === pages.length - 1}
+                        size="small"
+                      >
+                        <NavigateNextIcon />
+                      </IconButton>
+                    </Stack>
+                  )}
+                </Box>
+                <CardContent sx={{ p: 4, pt: pages.length > 1 ? 2 : 4 }}>
                   <Typography 
                     variant="body1" 
                     sx={{ 
@@ -424,7 +457,7 @@ function PublishedJournalViewer({
                       wordBreak: 'break-word'
                     }}
                   >
-                    {entry.content}
+                    {pages[currentPageIndex]}
                   </Typography>
                 </CardContent>
               </Card>

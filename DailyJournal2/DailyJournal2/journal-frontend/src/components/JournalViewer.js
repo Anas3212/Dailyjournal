@@ -38,13 +38,24 @@ import {
   FavoriteBorder as FavoriteBorderIcon,
   Visibility as VisibilityIcon,
   ThumbUpAlt as ThumbUpIcon,
-  ThumbDownAlt as ThumbDownIcon
+  ThumbDownAlt as ThumbDownIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon
 } from '@mui/icons-material';
 import { getFileType as getFileTypeUtil, extractFilename } from '../utils/fileUtils';
 import { downloadFile } from '../utils/fileDownload';
 
 function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, stats, onReact }) {
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+  // Reset page when entry changes
+  useEffect(() => {
+    setCurrentPageIndex(0);
+  }, [entry?.id]);
+
   if (!entry) return null;
+
+  const pages = entry.pages?.length > 0 ? entry.pages : [entry.content || ''];
 
   const handleDownloadFile = async (url) => {
     try {
@@ -366,9 +377,34 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
         <Box sx={{ p: 4, overflow: 'auto', maxHeight: '60vh' }}>
           {/* Content text */}
           <Card elevation={0} sx={{ p: 4, mb: 4, bgcolor: 'white', borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>
-              Your Thoughts & Reflections
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                Your Thoughts & Reflections
+              </Typography>
+              
+              {pages.length > 1 && (
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <IconButton 
+                    onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
+                    disabled={currentPageIndex === 0}
+                    size="small"
+                  >
+                    <NavigateBeforeIcon />
+                  </IconButton>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Page {currentPageIndex + 1} / {pages.length}
+                  </Typography>
+                  <IconButton 
+                    onClick={() => setCurrentPageIndex(p => Math.min(pages.length - 1, p + 1))}
+                    disabled={currentPageIndex === pages.length - 1}
+                    size="small"
+                  >
+                    <NavigateNextIcon />
+                  </IconButton>
+                </Stack>
+              )}
+            </Box>
+            
             <Typography
               variant="body1"
               sx={{
@@ -380,7 +416,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                 textAlign: 'justify'
               }}
             >
-              {entry.content}
+              {pages[currentPageIndex]}
             </Typography>
           </Card>
 

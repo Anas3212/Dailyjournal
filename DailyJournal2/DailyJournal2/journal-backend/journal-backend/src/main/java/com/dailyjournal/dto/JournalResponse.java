@@ -24,6 +24,7 @@ public class JournalResponse {
     private boolean everPublished;
     private boolean hiddenByAdmin;
     private List<String> mediaUrls; // ✅ Multiple media preview URLs
+    private List<String> pages = new java.util.ArrayList<>(); // ✅ Support for multiple pages
 
     private Long userId;      // ✅ Added
     private String userName;  // ✅ Added

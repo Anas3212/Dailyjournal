@@ -47,6 +47,15 @@ public class JournalEntry {
     @Column(name = "media_path") // ✅ Column for individual file paths
     private List<String> mediaPaths;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "journal_pages",
+            joinColumns = @JoinColumn(name = "journal_id")
+    )
+    @Column(name = "page_content", columnDefinition = "LONGTEXT")
+    @OrderColumn(name = "page_number")
+    private List<String> pages = new java.util.ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

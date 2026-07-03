@@ -237,7 +237,28 @@ public class JournalService {
 
         JournalEntry entry = new JournalEntry();
         entry.setTitle(req.getTitle());
-        entry.setContent(req.getContent());
+        
+        if (req.getPages() != null && !req.getPages().isEmpty()) {
+            // Validation
+            if (req.getPages().size() > 10) {
+                throw new com.dailyjournal.exception.BadRequestException("A journal cannot exceed 10 pages.");
+            }
+            for (String page : req.getPages()) {
+                if (page == null || page.isBlank()) {
+                    throw new com.dailyjournal.exception.BadRequestException("Page content cannot be empty.");
+                }
+                if (page.length() > 5000) {
+                    throw new com.dailyjournal.exception.BadRequestException("A single page cannot exceed 5000 characters.");
+                }
+            }
+            entry.setPages(req.getPages());
+            entry.setContent(req.getPages().get(0));
+        } else {
+            // Fallback for legacy clients
+            entry.setContent(req.getContent());
+            entry.setPages(List.of(req.getContent() != null ? req.getContent() : ""));
+        }
+
         entry.setMood(req.getMood());
         entry.setDate(req.getDate());
         entry.setTags(req.getTags());
@@ -318,7 +339,27 @@ public class JournalService {
         
 
         entry.setTitle(req.getTitle());
-        entry.setContent(req.getContent());
+        
+        if (req.getPages() != null && !req.getPages().isEmpty()) {
+            // Validation
+            if (req.getPages().size() > 10) {
+                throw new com.dailyjournal.exception.BadRequestException("A journal cannot exceed 10 pages.");
+            }
+            for (String page : req.getPages()) {
+                if (page == null || page.isBlank()) {
+                    throw new com.dailyjournal.exception.BadRequestException("Page content cannot be empty.");
+                }
+                if (page.length() > 5000) {
+                    throw new com.dailyjournal.exception.BadRequestException("A single page cannot exceed 5000 characters.");
+                }
+            }
+            entry.setPages(req.getPages());
+            entry.setContent(req.getPages().get(0));
+        } else {
+            // Fallback for legacy clients
+            entry.setContent(req.getContent());
+            entry.setPages(List.of(req.getContent() != null ? req.getContent() : ""));
+        }
         entry.setMood(req.getMood());
         entry.setTags(req.getTags());
         entry.setDate(req.getDate());

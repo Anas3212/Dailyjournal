@@ -24,13 +24,25 @@ import {
   Lock as LockIcon, 
   Public as PublicIcon, 
   Warning as WarningIcon,
-  Timer as TimerIcon 
+  Timer as TimerIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { acquireJournalLock, releaseJournalLock, extendJournalLock, checkJournalLockStatus } from '../services/teamApi';
 
 function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJournal = false }) {
   const [title, setTitle] = useState(initialData?.title || '');
-  const [content, setContent] = useState(initialData?.content || '');
+  
+  // Use pages array instead of single content string
+  const [pages, setPages] = useState(
+    initialData?.pages?.length > 0 
+      ? initialData.pages 
+      : [initialData?.content || '']
+  );
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
   const [mood, setMood] = useState(initialData?.mood || '');
   const [tags, setTags] = useState(initialData?.tags ? (Array.isArray(initialData.tags) ? initialData.tags : initialData.tags.split(',')) : []);
   const [tagInput, setTagInput] = useState('');
@@ -47,7 +59,12 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
 
   useEffect(() => {
     setTitle(initialData?.title || '');
-    setContent(initialData?.content || '');
+    setPages(
+      initialData?.pages?.length > 0 
+        ? initialData.pages 
+        : [initialData?.content || '']
+    );
+    setCurrentPageIndex(0);
     setMood(initialData?.mood || '');
     setTags(initialData?.tags ? (Array.isArray(initialData.tags) ? initialData.tags : initialData.tags.split(',')) : []);
     setDate(initialData?.date ? initialData.date : new Date().toISOString().slice(0, 10));
@@ -159,7 +176,7 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
       // Only include mediaPaths if we have media URLs to preserve
       const saveData = {
         title,
-        content,
+        pages, // Send pages array
         mood,
         tags: tags.join(','),
         date,
@@ -252,14 +269,74 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
           </Alert>
         )}
         <TextField label="Title" fullWidth margin="normal" value={title} onChange={e => setTitle(e.target.value)} required disabled={readOnly} />
+        <Box sx={{ mt: 2, mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Button 
+              size="small" 
+              onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
+              disabled={currentPageIndex === 0}
+              startIcon={<NavigateBeforeIcon />}
+            >
+              Prev
+            </Button>
+            <Typography variant="body2" sx={{ mx: 2 }}>
+              Page {currentPageIndex + 1} / {pages.length}
+            </Typography>
+            <Button 
+              size="small" 
+              onClick={() => setCurrentPageIndex(p => Math.min(pages.length - 1, p + 1))}
+              disabled={currentPageIndex === pages.length - 1}
+              endIcon={<NavigateNextIcon />}
+            >
+              Next
+            </Button>
+          </Stack>
+          {!readOnly && (
+            <Stack direction="row" spacing={1}>
+              <Button 
+                size="small" 
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => {
+                  if (pages.length <= 1) return;
+                  const newPages = [...pages];
+                  newPages.splice(currentPageIndex, 1);
+                  setPages(newPages);
+                  setCurrentPageIndex(p => Math.max(0, p - 1));
+                }}
+                disabled={pages.length <= 1}
+              >
+                Delete Page
+              </Button>
+              <Button 
+                size="small" 
+                variant="outlined" 
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  if (pages.length >= 10) return;
+                  setPages([...pages, '']);
+                  setCurrentPageIndex(pages.length);
+                }}
+                disabled={pages.length >= 10}
+              >
+                Add Page
+              </Button>
+            </Stack>
+          )}
+        </Box>
         <TextField
-          label="Content"
+          label={`Content (Page ${currentPageIndex + 1})`}
           fullWidth
           margin="normal"
           multiline
           minRows={4}
-          value={content}
-          onChange={e => setContent(e.target.value)}
+          value={pages[currentPageIndex] || ''}
+          onChange={e => {
+            const newPages = [...pages];
+            newPages[currentPageIndex] = e.target.value;
+            setPages(newPages);
+          }}
           required
           disabled={readOnly}
           sx={{ textarea: { minHeight: '13vh', fontSize: '1rem', lineHeight: 1.6 } }}
