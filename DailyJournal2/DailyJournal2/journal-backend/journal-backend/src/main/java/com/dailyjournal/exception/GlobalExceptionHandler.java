@@ -95,10 +95,25 @@ public class GlobalExceptionHandler {
         static ApiError of(HttpStatus status, String message, String path) {
             return new ApiError(OffsetDateTime.now(), status.value(), status.getReasonPhrase(), message, path);
         }
-        static ApiError notFound(String message, String path) { return of(HttpStatus.NOT_FOUND, message, path); }
-        static ApiError forbidden(String message, String path) { return of(HttpStatus.FORBIDDEN, message, path); }
-        static ApiError badRequest(String message, String path) { return of(HttpStatus.BAD_REQUEST, message, path); }
-        static ApiError unauthorized(String message, String path) { return of(HttpStatus.UNAUTHORIZED, message, path); }
-        static ApiError internal(String message, String path) { return of(HttpStatus.INTERNAL_SERVER_ERROR, message, path); }
+
+        static ApiError notFound(String message, String path) {
+            return of(HttpStatus.NOT_FOUND, message, path);
+        }
+
+        static ApiError forbidden(String message, String path) {
+            return of(HttpStatus.FORBIDDEN, message, path);
+        }
+
+        static ApiError badRequest(String message, String path) {
+            return of(HttpStatus.BAD_REQUEST, message, path);
+        }
+
+        static ApiError unauthorized(String message, String path) {
+            return of(HttpStatus.UNAUTHORIZED, message, path);
+        }
+
+        static ApiError internal(String message, String path) {
+            return of(HttpStatus.INTERNAL_SERVER_ERROR, message, path);
+        }
     }
 }

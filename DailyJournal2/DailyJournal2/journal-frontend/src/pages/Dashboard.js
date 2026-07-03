@@ -625,6 +625,18 @@ function Dashboard() {
           const fullUrl = getFullFileUrl(url);
           // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
           const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
+
+      if (isCloudinary) {
+        const attachmentUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
+        const link = document.createElement('a');
+        link.href = attachmentUrl;
+        link.target = '_blank';
+        link.download = url.split('/').pop().split('?')[0];
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
           const response = await fetch(fullUrl, {
             credentials: isCloudinary ? 'omit' : 'include'
           });
@@ -758,6 +770,18 @@ function Dashboard() {
       const fullUrl = getFullFileUrl(url);
       // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
       const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
+
+      if (isCloudinary) {
+        const attachmentUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
+        const link = document.createElement('a');
+        link.href = attachmentUrl;
+        link.target = '_blank';
+        link.download = url.split('/').pop().split('?')[0];
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
       const response = await fetch(fullUrl, {
         credentials: isCloudinary ? 'omit' : 'include'
       });

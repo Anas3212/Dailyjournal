@@ -33,6 +33,18 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
     const fullUrl = getFullMediaUrl(url);
     const filename = url.split('/').pop().split('?')[0]; // strip query params
     const isCloudinaryUrl = fullUrl.startsWith('https://res.cloudinary.com');
+
+    if (isCloudinaryUrl) {
+      const attachmentUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
+      const link = document.createElement('a');
+      link.href = attachmentUrl;
+      link.target = '_blank';
+      link.download = url.split('/').pop().split('?')[0];
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
     
     fetch(fullUrl, {
       method: 'GET',

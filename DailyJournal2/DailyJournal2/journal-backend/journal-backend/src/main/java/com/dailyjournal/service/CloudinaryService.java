@@ -106,8 +106,19 @@ public class CloudinaryService {
             // storedPath may be a full https://res.cloudinary.com/... URL
             // Extract public_id from it
             String publicId = extractPublicId(storedPath);
-            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-            log.debug("Cloudinary deleted: {}", publicId);
+            
+            // Determine resource_type from URL
+            String resourceType = "image";
+            if (storedPath != null) {
+                if (storedPath.contains("/video/")) {
+                    resourceType = "video";
+                } else if (storedPath.contains("/raw/")) {
+                    resourceType = "raw";
+                }
+            }
+            
+            cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+            log.debug("Cloudinary deleted: {} (type: {})", publicId, resourceType);
         } catch (Exception e) {
             log.warn("Failed to delete from Cloudinary: {} — {}", storedPath, e.getMessage());
         }
