@@ -496,11 +496,14 @@ export default function TeamJournals() {
       const fullUrl = url.startsWith('http') ? url : `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}${url}`;
       // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
       const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
-
+      
       if (isCloudinary) {
-        const attachmentUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
+        let downloadUrl = fullUrl;
+        if (!fullUrl.includes('/raw/upload/')) {
+          downloadUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
+        }
         const link = document.createElement('a');
-        link.href = attachmentUrl;
+        link.href = downloadUrl;
         link.target = '_blank';
         link.download = url.split('/').pop().split('?')[0];
         document.body.appendChild(link);

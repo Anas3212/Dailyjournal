@@ -33,23 +33,28 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
     const fullUrl = getFullMediaUrl(url);
     const filename = url.split('/').pop().split('?')[0]; // strip query params
     const isCloudinaryUrl = fullUrl.startsWith('https://res.cloudinary.com');
-
+    
     if (isCloudinaryUrl) {
-      const attachmentUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
-      const link = document.createElement('a');
-      link.href = attachmentUrl;
-      link.target = '_blank';
-      link.download = url.split('/').pop().split('?')[0];
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      let downloadUrl = fullUrl;
+      // If it's not a raw file (like PDF), use fl_attachment
+      if (!fullUrl.includes('/raw/upload/')) {
+        downloadUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
+      }
+      
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.target = '_blank';
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       return;
     }
-    
+
     fetch(fullUrl, {
       method: 'GET',
       // Only send cookies for backend media endpoint, not for Cloudinary
-      credentials: isCloudinaryUrl ? 'omit' : 'include',
+      credentials: 'include',
     })
     .then(response => {
       if (!response.ok) throw new Error('Failed to download file');
