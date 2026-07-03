@@ -28,7 +28,7 @@ public class CookieSecurityConfig {
 
     private final CookieJWTFilter cookieJWTFilter;
 
-    @Value("${app.cors.allowed-origins}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,https://dailyjournal-one.vercel.app}")
     private String corsAllowedOrigins;
 
     // @Bean - DISABLED to avoid bean conflicts

@@ -32,7 +32,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:3000}")
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:3000,https://dailyjournal-one.vercel.app}")
     private String allowedOrigins;
 
     // Primary JWT authentication filter

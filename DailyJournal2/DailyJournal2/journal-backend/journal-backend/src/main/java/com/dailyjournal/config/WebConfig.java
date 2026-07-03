@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.cors.allowed-origins}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,https://dailyjournal-one.vercel.app}")
     private String corsAllowedOrigins;
 
     // Enable CORS for frontend access (React at localhost:3000)

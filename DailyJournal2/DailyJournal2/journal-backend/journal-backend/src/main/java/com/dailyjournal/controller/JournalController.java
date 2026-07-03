@@ -251,7 +251,18 @@ public class JournalController {
                             + publicIdPath;
                     
                     // Instead of redirecting (which causes CORS issues), proxy the content
-                    byte[] content = cloudinaryService.downloadFromUrl(cUrl);
+                    byte[] content;
+                    try {
+                        content = cloudinaryService.downloadFromUrl(cUrl);
+                    } catch (Exception e) {
+                        // If fetching fails, Cloudinary might have auto-detected PDF as an 'image' resource
+                        if (extension.equals("pdf") && resourceType.equals("raw")) {
+                            cUrl = "https://res.cloudinary.com/" + cloudName + "/image/upload/" + publicIdPath;
+                            content = cloudinaryService.downloadFromUrl(cUrl);
+                        } else {
+                            throw e;
+                        }
+                    }
                     String contentType = "application/octet-stream";
                     switch (extension) {
                         case "pdf":
