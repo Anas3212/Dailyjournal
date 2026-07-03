@@ -239,11 +239,11 @@ public class JournalController {
                     String resourceType = (extension.equals("mp4") || extension.equals("webm") || extension.equals("ogg")) ? "video"
                             : (extension.equals("pdf") ? "raw" : "image");
                     
-                    // Note: If Cloudinary uploaded it in a specific folder, e.g. "journal-media",
+                    // Note: If Cloudinary uploaded it in a specific folder, e.g. "dailyjournal",
                     // we prepend it here.
                     String publicIdPath = filename;
                     if (!filename.contains("/")) {
-                        publicIdPath = "journal-media/" + filename;
+                        publicIdPath = "dailyjournal/" + filename;
                     }
                     
                     // Build Cloudinary URL with proper resource type
