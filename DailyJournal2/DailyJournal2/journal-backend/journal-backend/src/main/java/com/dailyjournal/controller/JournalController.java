@@ -182,23 +182,77 @@ public class JournalController {
         try {
             // Enforce access: owner, admin, public, or team member of the journal
             // containing this media
-            journalService.assertCanAccessMediaByFilename(filename);
+            JournalEntry entry = journalService.assertCanAccessMediaByFilename(filename);
 
-            // If the stored path is a full Cloudinary URL, redirect to it
-            if (filename.startsWith("http://") || filename.startsWith("https://")) {
-                return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create(filename))
-                        .build();
+            // Check if the media path in the database is a Cloudinary URL
+            List<String> mediaPaths = entry.getMediaPaths();
+            if (mediaPaths == null || mediaPaths.isEmpty()) {
+                return ResponseEntity.notFound().build();
             }
 
-            // Try to serve from local disk first (local dev mode)
-            Path path = Paths.get("uploads").resolve(filename);
+            // Find the matching media path (could be full URL or local filename)
+            String actualMediaPath = null;
+            for (String path : mediaPaths) {
+                if (path.equals(filename) || path.contains(filename)) {
+                    actualMediaPath = path;
+                    break;
+                }
+            }
+
+            if (actualMediaPath == null) {
+                System.out.println("Media path not found in journal: " + filename);
+                return ResponseEntity.notFound().build();
+            }
+
+            // If the stored path is a full Cloudinary URL, proxy it
+            if (actualMediaPath.startsWith("http://") || actualMediaPath.startsWith("https://")) {
+                try {
+                    byte[] content = cloudinaryService.downloadFromUrl(actualMediaPath);
+                    String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+                    String contentType = "application/octet-stream";
+                    switch (extension) {
+                        case "pdf":
+                            contentType = "application/pdf";
+                            break;
+                        case "jpg":
+                        case "jpeg":
+                            contentType = "image/jpeg";
+                            break;
+                        case "png":
+                            contentType = "image/png";
+                            break;
+                        case "gif":
+                            contentType = "image/gif";
+                            break;
+                        case "mp4":
+                            contentType = "video/mp4";
+                            break;
+                        case "mp3":
+                            contentType = "audio/mpeg";
+                            break;
+                    }
+                    
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_TYPE, contentType)
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                            .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                            .header("Pragma", "no-cache")
+                            .header("Expires", "0")
+                            .body(content);
+                } catch (Exception e) {
+                    System.out.println("Failed to download from Cloudinary URL: " + e.getMessage());
+                    return ResponseEntity.notFound().build();
+                }
+            }
+
+            // Try to serve from local disk (local dev mode)
+            Path path = Paths.get("uploads").resolve(actualMediaPath);
             Resource resource = new UrlResource(path.toUri());
 
             if (resource.exists() && resource.isReadable()) {
                 // Determine content type based on file extension
                 String contentType = "application/octet-stream";
-                String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+                String extension = actualMediaPath.substring(actualMediaPath.lastIndexOf('.') + 1).toLowerCase();
 
                 switch (extension) {
                     case "pdf":
@@ -224,73 +278,18 @@ public class JournalController {
 
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, contentType)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + actualMediaPath + "\"")
                         .header("Cache-Control", "no-cache, no-store, must-revalidate")
                         .header("Pragma", "no-cache")
                         .header("Expires", "0")
                         .body(resource);
             }
 
-            // If local file not found, try Cloudinary
-            if (cloudinaryService.isCloudinaryEnabled()) {
-                String cloudName = cloudinaryService.getCloudName();
-                if (cloudName != null) {
-                    String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-                    String resourceType = (extension.equals("mp4") || extension.equals("webm") || extension.equals("ogg")) ? "video"
-                            : (extension.equals("pdf") ? "raw" : "image");
-                    
-                    // Note: If Cloudinary uploaded it in a specific folder, e.g. "journal-media",
-                    // we prepend it here.
-                    String publicIdPath = filename;
-                    if (!filename.contains("/")) {
-                        publicIdPath = "journal-media/" + filename;
-                    }
-                    
-                    // Build Cloudinary URL with proper resource type
-                    String cUrl = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/"
-                            + publicIdPath;
-                    
-                    // Instead of redirecting (which causes CORS issues), proxy the content
-                    try {
-                        byte[] content = cloudinaryService.downloadFromUrl(cUrl);
-                        String contentType = "application/octet-stream";
-                        switch (extension) {
-                            case "pdf":
-                                contentType = "application/pdf";
-                                break;
-                            case "jpg":
-                            case "jpeg":
-                                contentType = "image/jpeg";
-                                break;
-                            case "png":
-                                contentType = "image/png";
-                                break;
-                            case "gif":
-                                contentType = "image/gif";
-                                break;
-                            case "mp4":
-                                contentType = "video/mp4";
-                                break;
-                            case "mp3":
-                                contentType = "audio/mpeg";
-                                break;
-                        }
-                        
-                        return ResponseEntity.ok()
-                                .header(HttpHeaders.CONTENT_TYPE, contentType)
-                                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
-                                .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                                .header("Pragma", "no-cache")
-                                .header("Expires", "0")
-                                .body(content);
-                    } catch (Exception e) {
-                        System.out.println("Failed to download from Cloudinary: " + e.getMessage());
-                        return ResponseEntity.notFound().build();
-                    }
-                }
-            }
+            // Local file not found and not a Cloudinary URL - file was lost during deployment
+            System.out.println("Media file not found locally: " + actualMediaPath + " (may have been uploaded before Cloudinary was configured)");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Media file not found. This file may have been uploaded before Cloudinary was configured and was lost during deployment. Please re-upload the file.");
             
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             System.out.println("Error serving media: " + e.getMessage());
             e.printStackTrace();
