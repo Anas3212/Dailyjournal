@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, Button, Box, TextField, TableSortLabel, 
-  Dialog, DialogTitle, DialogContent, DialogActions, 
+import {
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Button, Box, TextField, TableSortLabel,
+  Dialog, DialogTitle, DialogContent, DialogActions,
   Chip, Typography, Grid, ImageList, ImageListItem,
   List, ListItem, ListItemIcon, ListItemText, ListItemSecondaryAction,
   IconButton, Stack
 } from '@mui/material';
-import { 
+import {
   AttachFile as AttachFileIcon,
   ZoomIn as ZoomInIcon,
   Delete as DeleteIcon,
@@ -110,36 +110,36 @@ const JournalsTable = () => {
 
     // Search filter
     if (searchTerm) {
-      filteredJournals = filteredJournals.filter(journal => 
+      filteredJournals = filteredJournals.filter(journal =>
         (journal.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (journal.pages && journal.pages.some(page => (page || '').toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (journal.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (journal.user?.name || 'Unknown').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Mood filter
     if (filterConfig.mood) {
-      filteredJournals = filteredJournals.filter(journal => 
+      filteredJournals = filteredJournals.filter(journal =>
         (journal.mood || '').toLowerCase() === filterConfig.mood.toLowerCase()
       );
     }
 
     // Tags filter
     if (filterConfig.tags) {
-      filteredJournals = filteredJournals.filter(journal => 
+      filteredJournals = filteredJournals.filter(journal =>
         (journal.tags || '').toLowerCase().includes(filterConfig.tags.toLowerCase())
       );
     }
 
     // Date range filter
     if (filterConfig.startDate) {
-      filteredJournals = filteredJournals.filter(journal => 
+      filteredJournals = filteredJournals.filter(journal =>
         new Date(journal.date || new Date()) >= new Date(filterConfig.startDate)
       );
     }
 
     if (filterConfig.endDate) {
-      filteredJournals = filteredJournals.filter(journal => 
+      filteredJournals = filteredJournals.filter(journal =>
         new Date(journal.date || new Date()) <= new Date(filterConfig.endDate)
       );
     }
@@ -241,37 +241,37 @@ const JournalsTable = () => {
                 </TableCell>
                 <TableCell>{journal.tags || 'No Tags'}</TableCell>
                 <TableCell>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    size="small" 
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
                     sx={{ mr: 1, mb: 1 }}
                     onClick={() => handleView(journal)}
                   >
                     View
                   </Button>
-                  <Button 
-                    variant="contained" 
-                    color="secondary" 
-                    size="small" 
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    size="small"
                     sx={{ mr: 1, mb: 1 }}
                     onClick={() => handleEdit(journal)}
                   >
                     Edit
                   </Button>
-                  <Button 
-                    variant="contained" 
-                    color="info" 
-                    size="small" 
+                  <Button
+                    variant="contained"
+                    color="info"
+                    size="small"
                     sx={{ mr: 1, mb: 1 }}
                     onClick={() => setFileDialog({ open: true, journalId: journal.id })}
                   >
                     Media
                   </Button>
-                  <Button 
-                    variant="contained" 
-                    color="error" 
-                    size="small" 
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
                     onClick={() => handleDelete(journal.id)}
                   >
                     Delete
@@ -284,10 +284,10 @@ const JournalsTable = () => {
       </TableContainer>
 
       {/* View Journal Dialog */}
-      <Dialog 
-        open={openViewDialog} 
-        onClose={handleCloseViewDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={openViewDialog}
+        onClose={handleCloseViewDialog}
+        maxWidth="md"
         fullWidth
       >
         {selectedJournal && (
@@ -297,8 +297,8 @@ const JournalsTable = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} md={8}>
                   <Typography variant="h6">Content</Typography>
-                  <Typography>{(selectedJournal.pages && selectedJournal.pages.length > 0) ? selectedJournal.pages[0] : (selectedJournal.content || 'No content available')}</Typography>
-                  
+                  <Typography>{selectedJournal.content || 'No content available'}</Typography>
+
                   <Typography variant="h6" sx={{ mt: 2 }}>Details</Typography>
                   <Typography>Date: {selectedJournal.date ? new Date(selectedJournal.date).toLocaleDateString() : 'N/A'}</Typography>
                   <Typography>Mood: {selectedJournal.mood || 'Unspecified'}</Typography>
@@ -312,10 +312,10 @@ const JournalsTable = () => {
                       <ImageList cols={2} gap={8}>
                         {selectedJournal.mediaUrls.map((url, index) => (
                           <ImageListItem key={index}>
-                            <img 
-                              src={url} 
-                              alt={`Media ${index + 1}`} 
-                              loading="lazy" 
+                            <img
+                              src={url}
+                              alt={`Media ${index + 1}`}
+                              loading="lazy"
                               style={{ maxWidth: '100%', height: 'auto' }}
                             />
                           </ImageListItem>
@@ -337,15 +337,15 @@ const JournalsTable = () => {
 
       {/* Edit Journal Dialog */}
       {selectedJournal && (
-        <Dialog 
-          open={openEditDialog} 
-          onClose={handleCloseEditDialog} 
-          maxWidth="md" 
+        <Dialog
+          open={openEditDialog}
+          onClose={handleCloseEditDialog}
+          maxWidth="md"
           fullWidth
         >
           <DialogTitle>Edit Journal Entry</DialogTitle>
           <DialogContent>
-            <JournalEditor 
+            <JournalEditor
               open={openEditDialog}
               onClose={handleCloseEditDialog}
               onSave={handleSaveEdit}
@@ -384,7 +384,7 @@ const JournalsTable = () => {
             >
               Add New Files
             </Button>
-            
+
             {fileDialog.journalId && (() => {
               const entry = journals.find(e => e.id === fileDialog.journalId);
               return entry?.mediaUrls && entry.mediaUrls.length > 0 ? (
@@ -498,7 +498,7 @@ const JournalsTable = () => {
     // For other cases, add the backend base URL
     return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}${url}`;
   }
-  
+
   // Helper function to download files as blobs
   async function downloadFile(url) {
     try {
@@ -514,27 +514,27 @@ const JournalsTable = () => {
   async function handleAddFile(journalId, e) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
+
     try {
       // Show some feedback that upload is in progress
       console.log('Uploading files...', files);
-      
+
       // Make sure journalId is valid
       if (!journalId) {
         console.error('Journal ID is missing');
         return;
       }
-      
+
       // Call the API to upload files
       const response = await uploadJournalFiles(journalId, files);
       console.log('Upload response:', response);
-      
+
       // Refresh the journal data
       await fetchJournals();
-      
+
       // Reset the file input
       e.target.value = '';
-      
+
       // Keep the dialog open to show the newly uploaded files
       // Instead of closing it immediately
     } catch (error) {

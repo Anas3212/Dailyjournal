@@ -30,13 +30,13 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Load team members and journals in parallel
       const [membersResponse, journalsResponse] = await Promise.all([
         teamApi.listMembers(team.id),
         teamApi.listTeamJournals(team.id)
       ]);
-      
+
       setMembers(membersResponse.data || []);
       setJournals(journalsResponse.data || []);
     } catch (err) {
@@ -77,18 +77,18 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: { borderRadius: 3, maxHeight: '90vh' }
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+      <DialogTitle sx={{
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         pb: 1
       }}>
@@ -131,7 +131,7 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                     <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
                     <Typography variant="h6">Members ({members.length})</Typography>
                   </Box>
-                  
+
                   <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
                     {members.map((member) => (
                       <Card key={member.id} variant="outlined" sx={{ mb: 1, p: 1.5 }}>
@@ -176,14 +176,14 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                     <JournalIcon sx={{ mr: 1, color: 'primary.main' }} />
                     <Typography variant="h6">Journals ({journals.length})</Typography>
                   </Box>
-                  
+
                   <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
                     {journals.map((journal) => (
                       <Card key={journal.id} variant="outlined" sx={{ mb: 1.5, p: 1.5 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                           {journal.title || 'Untitled Journal'}
                         </Typography>
-                        
+
                         {journal.user && (
                           <Stack direction="row" spacing={1} alignItems="center" mb={1}>
                             <Avatar sx={{ width: 20, height: 20, fontSize: '0.75rem', bgcolor: 'primary.main' }}>
@@ -210,9 +210,9 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                               color="secondary"
                             />
                           )}
-                          {(journal.pages?.length > 0 || journal.content) && (
+                          {journal.content && (
                             <Chip
-                              label={`${journal.pages?.length > 0 ? journal.pages.reduce((acc, p) => acc + (p?.length || 0), 0) : journal.content.length} chars`}
+                              label={`${journal.content.length} chars`}
                               size="small"
                               variant="outlined"
                             />
@@ -234,16 +234,16 @@ function TeamReadOnlyDialog({ open, onClose, team }) {
                           </Stack>
                         )}
 
-                        {(journal.pages?.length > 0 || journal.content) && (
-                          <Typography 
-                            variant="body2" 
-                            color="text.secondary" 
-                            sx={{ 
+                        {journal.content && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
                               whiteSpace: 'pre-wrap',
                               fontFamily: 'monospace'
                             }}
                           >
-                            {formatContentPreview((journal.pages && journal.pages.length > 0) ? journal.pages[0] : journal.content)}
+                            {formatContentPreview(journal.content)}
                           </Typography>
                         )}
                       </Card>

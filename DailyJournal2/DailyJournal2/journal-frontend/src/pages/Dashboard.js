@@ -765,7 +765,7 @@ function Dashboard() {
   const filteredEntries = entries.filter(entry => {
     const searchTerm = search.toLowerCase();
     const matchesTitle = entry.title?.toLowerCase().includes(searchTerm);
-    const matchesContent = entry.content?.toLowerCase().includes(searchTerm);
+    const matchesContent = entry.content?.toLowerCase().includes(searchTerm) || (entry.pages && entry.pages.some(page => page?.toLowerCase().includes(searchTerm)));
     const matchesTags = entry.tags?.toLowerCase().includes(searchTerm);
     const matchesMood = entry.mood?.toLowerCase().includes(searchTerm);
     const matchesMoodFilter = filterMood === 'all' || (entry.mood && entry.mood.toLowerCase() === filterMood);
@@ -1483,7 +1483,7 @@ function Dashboard() {
                             overflow: 'hidden'
                           }}
                         >
-                          {truncateText(entry.content)}
+                          {truncateText((entry.pages && entry.pages.length > 0) ? entry.pages[0] : entry.content)}
                         </Typography>
 
                         {/* Tags */}
