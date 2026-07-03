@@ -190,7 +190,7 @@ public class JournalController {
                 return ResponseEntity.notFound().build();
             }
 
-            // Find the matching media path (could be full URL or local filename)
+            // Find the matching media path (should be a Cloudinary URL)
             String actualMediaPath = null;
             for (String path : mediaPaths) {
                 if (path.equals(filename) || path.contains(filename)) {
@@ -204,7 +204,7 @@ public class JournalController {
                 return ResponseEntity.notFound().build();
             }
 
-            // If the stored path is a full Cloudinary URL, proxy it
+            // All media should be Cloudinary URLs - proxy them through backend
             if (actualMediaPath.startsWith("http://") || actualMediaPath.startsWith("https://")) {
                 try {
                     byte[] content = cloudinaryService.downloadFromUrl(actualMediaPath);
@@ -245,50 +245,10 @@ public class JournalController {
                 }
             }
 
-            // Try to serve from local disk (local dev mode)
-            Path path = Paths.get("uploads").resolve(actualMediaPath);
-            Resource resource = new UrlResource(path.toUri());
-
-            if (resource.exists() && resource.isReadable()) {
-                // Determine content type based on file extension
-                String contentType = "application/octet-stream";
-                String extension = actualMediaPath.substring(actualMediaPath.lastIndexOf('.') + 1).toLowerCase();
-
-                switch (extension) {
-                    case "pdf":
-                        contentType = "application/pdf";
-                        break;
-                    case "jpg":
-                    case "jpeg":
-                        contentType = "image/jpeg";
-                        break;
-                    case "png":
-                        contentType = "image/png";
-                        break;
-                    case "gif":
-                        contentType = "image/gif";
-                        break;
-                    case "mp4":
-                        contentType = "video/mp4";
-                        break;
-                    case "mp3":
-                        contentType = "audio/mpeg";
-                        break;
-                }
-
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_TYPE, contentType)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + actualMediaPath + "\"")
-                        .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                        .header("Pragma", "no-cache")
-                        .header("Expires", "0")
-                        .body(resource);
-            }
-
-            // Local file not found and not a Cloudinary URL - file was lost during deployment
-            System.out.println("Media file not found locally: " + actualMediaPath + " (may have been uploaded before Cloudinary was configured)");
+            // If not a Cloudinary URL, it's a legacy local file that was lost
+            System.out.println("Legacy local file not found: " + actualMediaPath + " (Cloudinary is now required)");
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Media file not found. This file may have been uploaded before Cloudinary was configured and was lost during deployment. Please re-upload the file.");
+                    .body("Media file not found. This is a legacy local file. Cloudinary is now required for all media storage. Please re-upload the file.");
             
         } catch (Exception e) {
             System.out.println("Error serving media: " + e.getMessage());

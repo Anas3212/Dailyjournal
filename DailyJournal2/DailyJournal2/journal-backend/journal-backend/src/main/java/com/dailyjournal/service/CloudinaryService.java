@@ -9,15 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * CloudinaryService — persists media files to Cloudinary cloud storage.
- * Falls back to local disk storage when Cloudinary credentials are not configured (local dev).
+ * Cloudinary is required for all media storage.
  */
 @Service
 @Slf4j
@@ -50,36 +46,27 @@ public class CloudinaryService {
                 cloudinaryEnabled = true;
                 log.info("Cloudinary storage enabled (cloud: {})", cloudName);
             } catch (Exception e) {
-                log.warn("Failed to initialise Cloudinary ({}). Falling back to local storage.", e.getMessage());
+                log.error("Failed to initialise Cloudinary: {}", e.getMessage());
+                throw new RuntimeException("Cloudinary configuration is required. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.");
             }
         } else {
-            log.info("Cloudinary credentials not set — using local disk storage (files will be lost on Render restart)");
+            log.error("Cloudinary credentials not set. Cloudinary is required for media storage. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.");
+            throw new RuntimeException("Cloudinary configuration is required. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.");
         }
     }
 
     /**
-     * Upload a file and return its public URL.
-     * When Cloudinary is enabled the returned URL is the Cloudinary secure URL.
-     * When disabled the returned value is the local filename (existing behaviour).
+     * Upload a file and return its Cloudinary secure URL.
      */
     public String upload(MultipartFile file) throws IOException {
-        if (cloudinaryEnabled) {
-            return uploadToCloudinary(file);
-        }
-        return uploadToLocalDisk(file);
+        return uploadToCloudinary(file);
     }
 
     /**
-     * Delete a file by its stored path/public-id.
-     * When Cloudinary is enabled the value is a Cloudinary public_id.
-     * When disabled the value is a local filename.
+     * Delete a file by its stored Cloudinary URL.
      */
     public void delete(String storedPath) {
-        if (cloudinaryEnabled) {
-            deleteFromCloudinary(storedPath);
-        } else {
-            deleteFromLocalDisk(storedPath);
-        }
+        deleteFromCloudinary(storedPath);
     }
 
     /**
@@ -146,24 +133,6 @@ public class CloudinaryService {
             afterUpload = afterUpload.substring(0, dotIdx);
         }
         return afterUpload;
-    }
-
-    private String uploadToLocalDisk(MultipartFile file) throws IOException {
-        String uploadDir = "uploads/";
-        Files.createDirectories(Paths.get(uploadDir));
-        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path filepath = Paths.get(uploadDir + filename);
-        file.transferTo(filepath);
-        return filename; // just the filename — served via /api/journals/media/{filename}
-    }
-
-    private void deleteFromLocalDisk(String filename) {
-        try {
-            Path filePath = Paths.get("uploads").resolve(filename);
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            log.warn("Failed to delete local file: {}", filename);
-        }
     }
 
     /**
