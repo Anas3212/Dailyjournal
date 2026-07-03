@@ -300,8 +300,7 @@ const FolderJournalViewer = ({
     <Dialog 
       open={open} 
       onClose={handleClose}
-      maxWidth="lg"
-      fullWidth
+      fullScreen
       PaperProps={{
         sx: { minHeight: '70vh' }
       }}
