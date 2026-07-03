@@ -49,7 +49,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
       const fullUrl = getFullFileUrl(url);
       // Cloudinary URLs are public CDN — no cookies needed (cookies cause CORS error)
       const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
-      
+
       if (isCloudinary) {
         let downloadUrl = fullUrl;
         if (!fullUrl.includes('/raw/upload/')) {
@@ -67,11 +67,11 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
       const response = await fetch(fullUrl, {
         credentials: isCloudinary ? 'omit' : 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to download file');
       }
-      
+
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -104,10 +104,16 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
   };
 
   const getFullFileUrl = (url) => {
+    // If the URL contains localhost:8080 (from old local testing), replace it with the real backend URL
+    if (url.includes('localhost:8080')) {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com';
+      url = url.replace('http://localhost:8080', backendUrl);
+    }
+    
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/api/journals/media/')) return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}${url}`;
-    if (!url.startsWith('/')) return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/journals/media/${url}`;
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}${url}`;
+    if (url.startsWith('/api/journals/media/')) return `${process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com'}${url}`;
+    if (!url.startsWith('/')) return `${process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com'}/api/journals/media/${url}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com'}${url}`;
   };
 
   // Authenticated Image Component for private media
@@ -121,9 +127,9 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
         try {
           setLoading(true);
           setError(false);
-          
+
           const fullUrl = getFullFileUrl(url);
-          
+
           // Cloudinary URLs are public CDN — no cookies needed (and would cause CORS error)
           const isCloudinary = fullUrl.startsWith('https://res.cloudinary.com');
           const response = await fetch(fullUrl, {
@@ -285,7 +291,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
               borderRadius: '50%'
             }}
           />
-          
+
           {/* Close button */}
           <IconButton
             onClick={onClose}
@@ -296,7 +302,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
               color: 'white',
               bgcolor: 'rgba(255,255,255,0.2)',
               backdropFilter: 'blur(10px)',
-              '&:hover': { 
+              '&:hover': {
                 bgcolor: 'rgba(255,255,255,0.3)',
                 transform: 'scale(1.1)'
               },
@@ -328,7 +334,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                 </Typography>
               </Box>
             </Stack>
-            
+
             <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} md={6}>
                 <Stack direction="row" spacing={2} alignItems="center">
@@ -343,7 +349,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                   </Box>
                 </Stack>
               </Grid>
-              
+
               {entry.mood && (
                 <Grid item xs={12} md={6}>
                   <Stack direction="row" spacing={2} alignItems="center">
@@ -381,7 +387,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                         color: 'white',
                         fontWeight: 600,
                         backdropFilter: 'blur(10px)',
-                        '&:hover': { 
+                        '&:hover': {
                           bgcolor: 'rgba(255,255,255,0.3)',
                           transform: 'scale(1.05)'
                         },
@@ -424,7 +430,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                 <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>
                   📎 Attachments ({entry.mediaUrls.length})
                 </Typography>
-                
+
                 <ImageList sx={{ width: '100%', height: 250, mb: 3 }} cols={4} rowHeight={100}>
                   {entry.mediaUrls.slice(0, 8).map((url, idx) => (
                     <ImageListItem key={url} sx={{ cursor: 'pointer', borderRadius: 2, overflow: 'hidden' }}>
@@ -502,7 +508,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                             borderRadius: 2,
                             bgcolor: 'white',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                            '&:hover': { 
+                            '&:hover': {
                               bgcolor: 'rgba(102, 126, 234, 0.05)',
                               transform: 'translateX(4px)'
                             },
@@ -519,7 +525,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                             <IconButton
                               size="small"
                               onClick={() => onOpenFileViewer(entry.mediaUrls, idx)}
-                              sx={{ 
+                              sx={{
                                 bgcolor: 'rgba(102, 126, 234, 0.1)',
                                 '&:hover': { bgcolor: 'rgba(102, 126, 234, 0.2)' }
                               }}
@@ -529,7 +535,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                             <IconButton
                               size="small"
                               onClick={() => handleDownloadFile(url)}
-                              sx={{ 
+                              sx={{
                                 bgcolor: 'rgba(76, 175, 80, 0.1)',
                                 '&:hover': { bgcolor: 'rgba(76, 175, 80, 0.2)' }
                               }}

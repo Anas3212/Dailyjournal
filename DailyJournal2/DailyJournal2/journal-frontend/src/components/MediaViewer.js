@@ -6,10 +6,10 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
   const [blobSrc, setBlobSrc] = useState('');
   // Check if the current file is a PDF
   const isPdf = mediaUrl?.toLowerCase().endsWith('.pdf');
-  
+
   // Check if the current file is an image
   const isImage = mediaUrl?.toLowerCase().match(/\.(jpeg|jpg|gif|png|webp)$/) !== null;
-  
+
   // Function to get the full media URL
   const getFullMediaUrl = (url) => {
     // If the URL already starts with http, return as is
@@ -27,56 +27,39 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
     // For other cases, add the backend base URL
     return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}${url}`;
   };
-  
+
   // Helper function to download files as blobs
   const downloadFile = (url) => {
     const fullUrl = getFullMediaUrl(url);
     const filename = url.split('/').pop().split('?')[0]; // strip query params
     const isCloudinaryUrl = fullUrl.startsWith('https://res.cloudinary.com');
-    
-    if (isCloudinaryUrl) {
-      let downloadUrl = fullUrl;
-      // If it's not a raw file (like PDF), use fl_attachment
-      if (!fullUrl.includes('/raw/upload/')) {
-        downloadUrl = fullUrl.replace('/upload/', '/upload/fl_attachment/');
-      }
-      
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.target = '_blank';
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      return;
-    }
 
     fetch(fullUrl, {
       method: 'GET',
       // Only send cookies for backend media endpoint, not for Cloudinary
-      credentials: 'include',
+      credentials: isCloudinaryUrl ? 'omit' : 'include',
     })
-    .then(response => {
-      if (!response.ok) throw new Error('Failed to download file');
-      return response.blob();
-    })
-    .then(blob => {
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-    })
-    .catch(error => {
-      console.error('Download error:', error);
-      // Fallback: open in new tab
-      window.open(fullUrl, '_blank');
-    });
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to download file');
+        return response.blob();
+      })
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      })
+      .catch(error => {
+        console.error('Download error:', error);
+        // Fallback: open in new tab
+        window.open(fullUrl, '_blank');
+      });
   };
-  
+
   const fullMediaUrl = getFullMediaUrl(mediaUrl);
   const isCloudinaryUrl = fullMediaUrl.startsWith('https://res.cloudinary.com');
 
@@ -120,7 +103,7 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
       controller.abort();
     };
   }, [open, mediaUrl, fullMediaUrl]);
-  
+
   return (
     <Dialog
       open={open}
@@ -135,7 +118,7 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
         >
           <Close />
         </IconButton>
-        
+
         {mediaUrls.length > 1 && (
           <>
             <IconButton
@@ -152,7 +135,7 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
             </IconButton>
           </>
         )}
-        
+
         {isPdf ? (
           <Box sx={{ height: '100%', overflow: 'auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', p: 4 }}>
             <Box sx={{ mb: 2, textAlign: 'center' }}>
@@ -161,18 +144,18 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
                 PDF preview is not available directly. Please use one of the options below:
               </Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="primary"
-                href={fullMediaUrl} 
-                target="_blank" 
+                href={fullMediaUrl}
+                target="_blank"
                 rel="noopener noreferrer"
               >
                 Open PDF in New Tab
               </Button>
-              <Button 
+              <Button
                 variant="outlined"
                 onClick={() => downloadFile(mediaUrl)}
               >
@@ -181,16 +164,16 @@ const MediaViewer = ({ open, onClose, mediaUrl, mediaUrls = [], onNext, onPrev }
             </Box>
           </Box>
         ) : isImage ? (
-          <img 
-            src={blobSrc || fullMediaUrl} 
-            alt="Media preview" 
-            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+          <img
+            src={blobSrc || fullMediaUrl}
+            alt="Media preview"
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
           />
         ) : (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             This file type cannot be previewed. Please download the file to view it.
             <Box sx={{ mt: 2 }}>
-              <Button 
+              <Button
                 variant="contained"
                 onClick={() => downloadFile(mediaUrl)}
               >

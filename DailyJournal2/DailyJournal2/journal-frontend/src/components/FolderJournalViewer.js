@@ -162,10 +162,17 @@ const FolderJournalViewer = ({
 
   const getFullFileUrl = (url) => {
     if (!url) return '';
+    // If the URL contains localhost:8080 (from old local testing), replace it with the real backend URL
+    if (url.includes('localhost:8080')) {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com';
+      url = url.replace('http://localhost:8080', backendUrl);
+    }
+    
     if (url.startsWith('http')) return url;
     
     // Add cache busting timestamp for better media loading
-    const baseUrl = `${process.env.REACT_APP_API_URL || `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}`}`}${url}`;
+    const backendHost = process.env.REACT_APP_API_URL || process.env.REACT_APP_BACKEND_URL || 'https://dailyjournal-5dnq.onrender.com';
+    const baseUrl = `${backendHost}${url}`;
     return `${baseUrl}?t=${Date.now()}`;
   };
 
