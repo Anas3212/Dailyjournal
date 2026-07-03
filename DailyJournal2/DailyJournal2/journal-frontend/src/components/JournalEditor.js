@@ -32,7 +32,7 @@ import {
 } from '@mui/icons-material';
 import { acquireJournalLock, releaseJournalLock, extendJournalLock, checkJournalLockStatus } from '../services/teamApi';
 
-function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJournal = false }) {
+function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJournal = false, fixedTeamId = null }) {
   const [title, setTitle] = useState(initialData?.title || '');
   
   // Use pages array instead of single content string
@@ -176,12 +176,13 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
       // Only include mediaPaths if we have media URLs to preserve
       const saveData = {
         title,
+        content: pages.length > 0 ? pages[0] : '', // Backend requires content field
         pages, // Send pages array
         mood,
         tags: tags.join(','),
         date,
         isPrivate,
-        teamId: null
+        teamId: fixedTeamId || initialData?.teamId || null
       };
       
       // Only add mediaPaths if we have media URLs to preserve
