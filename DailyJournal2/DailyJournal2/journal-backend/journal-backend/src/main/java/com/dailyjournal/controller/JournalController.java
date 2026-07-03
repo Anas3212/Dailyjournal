@@ -236,69 +236,23 @@ public class JournalController {
                 String cloudName = cloudinaryService.getCloudName();
                 if (cloudName != null) {
                     String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-                    String resourceType = (extension.equals("mp4") || extension.equals("webm") || extension.equals("ogg")) ? "video"
-                            : (extension.equals("pdf") ? "raw" : "image");
-                    
+                    String resourceType = (extension.equals("mp4") || extension.equals("webm")
+                            || extension.equals("ogg")) ? "video"
+                                    : (extension.equals("pdf") ? "raw" : "image");
+
                     // Note: If Cloudinary uploaded it in a specific folder, e.g. "dailyjournal",
                     // we prepend it here.
                     String publicIdPath = filename;
                     if (!filename.contains("/")) {
                         publicIdPath = "dailyjournal/" + filename;
                     }
-                    
+
                     // Build Cloudinary URL with proper resource type
                     String cUrl = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/"
                             + publicIdPath;
-                    
+
                     // Instead of redirecting (which causes CORS issues), proxy the content
-                    byte[] content;
-                    try {
-                        content = cloudinaryService.downloadFromUrl(cUrl);
-                    } catch (Exception e1) {
-                        // Fallback strategy if the first attempt fails (e.g. folder or resource type mismatch)
-                        boolean found = false;
-                        byte[] tempContent = null;
-                        
-                        if (extension.equals("pdf")) {
-                            // Try 2: Cloudinary often auto-detects PDFs as 'image'
-                            try {
-                                String try2Url = "https://res.cloudinary.com/" + cloudName + "/image/upload/" + publicIdPath;
-                                tempContent = cloudinaryService.downloadFromUrl(try2Url);
-                                found = true;
-                            } catch (Exception e2) {
-                                // Try 3: Try 'raw' without 'dailyjournal' folder
-                                try {
-                                    String try3Url = "https://res.cloudinary.com/" + cloudName + "/raw/upload/" + filename;
-                                    tempContent = cloudinaryService.downloadFromUrl(try3Url);
-                                    found = true;
-                                } catch (Exception e3) {
-                                    // Try 4: Try 'image' without 'dailyjournal' folder
-                                    try {
-                                        String try4Url = "https://res.cloudinary.com/" + cloudName + "/image/upload/" + filename;
-                                        tempContent = cloudinaryService.downloadFromUrl(try4Url);
-                                        found = true;
-                                    } catch (Exception e4) {
-                                        // All failed
-                                    }
-                                }
-                            }
-                        } else {
-                            // Try for non-PDFs: without 'dailyjournal' folder
-                            try {
-                                String try5Url = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/" + filename;
-                                tempContent = cloudinaryService.downloadFromUrl(try5Url);
-                                found = true;
-                            } catch (Exception e5) {
-                                // Failed
-                            }
-                        }
-                        
-                        if (found && tempContent != null) {
-                            content = tempContent;
-                        } else {
-                            throw new RuntimeException("Failed to download file from Cloudinary after trying all fallbacks: " + filename, e1);
-                        }
-                    }
+                    byte[] content = cloudinaryService.downloadFromUrl(cUrl);
                     String contentType = "application/octet-stream";
                     switch (extension) {
                         case "pdf":
@@ -321,7 +275,7 @@ public class JournalController {
                             contentType = "audio/mpeg";
                             break;
                     }
-                    
+
                     return ResponseEntity.ok()
                             .header(HttpHeaders.CONTENT_TYPE, contentType)
                             .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
@@ -332,11 +286,13 @@ public class JournalController {
                 }
             }
 
-            // Local file not found and not a Cloudinary URL - file was lost during deployment
-            System.out.println("Media file not found locally: " + filename + " (may have been uploaded before Cloudinary was configured)");
+            // Local file not found and not a Cloudinary URL - file was lost during
+            // deployment
+            System.out.println("Media file not found locally: " + filename
+                    + " (may have been uploaded before Cloudinary was configured)");
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Media file not found. This is a legacy local file. Cloudinary is now required for all media storage. Please re-upload the file.");
-            
+
         } catch (Exception e) {
             System.out.println("Error serving media: " + e.getMessage());
             e.printStackTrace();
@@ -389,7 +345,6 @@ public class JournalController {
 
         return ResponseEntity.ok(response);
     }
-
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @DeleteMapping({ "/{journalId}/media/{filename:.+}", "/{journalId}/media" })
