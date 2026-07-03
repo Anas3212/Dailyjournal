@@ -254,13 +254,49 @@ public class JournalController {
                     byte[] content;
                     try {
                         content = cloudinaryService.downloadFromUrl(cUrl);
-                    } catch (Exception e) {
-                        // If fetching fails, Cloudinary might have auto-detected PDF as an 'image' resource
-                        if (extension.equals("pdf") && resourceType.equals("raw")) {
-                            cUrl = "https://res.cloudinary.com/" + cloudName + "/image/upload/" + publicIdPath;
-                            content = cloudinaryService.downloadFromUrl(cUrl);
+                    } catch (Exception e1) {
+                        // Fallback strategy if the first attempt fails (e.g. folder or resource type mismatch)
+                        boolean found = false;
+                        byte[] tempContent = null;
+                        
+                        if (extension.equals("pdf")) {
+                            // Try 2: Cloudinary often auto-detects PDFs as 'image'
+                            try {
+                                String try2Url = "https://res.cloudinary.com/" + cloudName + "/image/upload/" + publicIdPath;
+                                tempContent = cloudinaryService.downloadFromUrl(try2Url);
+                                found = true;
+                            } catch (Exception e2) {
+                                // Try 3: Try 'raw' without 'dailyjournal' folder
+                                try {
+                                    String try3Url = "https://res.cloudinary.com/" + cloudName + "/raw/upload/" + filename;
+                                    tempContent = cloudinaryService.downloadFromUrl(try3Url);
+                                    found = true;
+                                } catch (Exception e3) {
+                                    // Try 4: Try 'image' without 'dailyjournal' folder
+                                    try {
+                                        String try4Url = "https://res.cloudinary.com/" + cloudName + "/image/upload/" + filename;
+                                        tempContent = cloudinaryService.downloadFromUrl(try4Url);
+                                        found = true;
+                                    } catch (Exception e4) {
+                                        // All failed
+                                    }
+                                }
+                            }
                         } else {
-                            throw e;
+                            // Try for non-PDFs: without 'dailyjournal' folder
+                            try {
+                                String try5Url = "https://res.cloudinary.com/" + cloudName + "/" + resourceType + "/upload/" + filename;
+                                tempContent = cloudinaryService.downloadFromUrl(try5Url);
+                                found = true;
+                            } catch (Exception e5) {
+                                // Failed
+                            }
+                        }
+                        
+                        if (found && tempContent != null) {
+                            content = tempContent;
+                        } else {
+                            throw new RuntimeException("Failed to download file from Cloudinary after trying all fallbacks: " + filename, e1);
                         }
                     }
                     String contentType = "application/octet-stream";

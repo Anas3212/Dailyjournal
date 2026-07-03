@@ -112,8 +112,14 @@ public class SecurityConfig {
         // Allow credentials for cookie-based authentication
         config.setAllowCredentials(true);
         
-        // Allow specific origins from environment
-        config.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+        java.util.List<String> origins = new java.util.ArrayList<>(java.util.Arrays.asList(allowedOrigins.split(",")));
+        if (!origins.contains("https://dailyjournal-one.vercel.app")) {
+            origins.add("https://dailyjournal-one.vercel.app");
+        }
+        if (!origins.contains("https://dailyjournal-5dnq.onrender.com")) {
+            origins.add("https://dailyjournal-5dnq.onrender.com");
+        }
+        config.setAllowedOriginPatterns(origins);
         
         // Allow all HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
