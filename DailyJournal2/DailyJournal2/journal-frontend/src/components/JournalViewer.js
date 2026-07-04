@@ -395,7 +395,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
         </Box>
 
         {/* Content area */}
-        <Box sx={{ p: 4, overflow: 'auto', maxHeight: '60vh' }}>
+        <Box sx={{ p: 4 }}>
           {/* Content text */}
           <Card elevation={0} sx={{ p: 4, mb: 4, bgcolor: 'white', borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

@@ -433,7 +433,7 @@ function PublishedJournalViewer({
         </Box>
 
         {/* Tab Content */}
-        <Box sx={{ p: 3, maxHeight: '70vh', overflow: 'auto' }}>
+        <Box sx={{ p: 3 }}>
           {activeTab === 0 && (
             <Box>
               {/* Journal Content */}
