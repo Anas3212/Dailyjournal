@@ -233,7 +233,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
         }
       }}
     >
-      <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
+      <DialogContent sx={{ p: 0 }}>
         {/* Header with beautiful gradient */}
         <Box
           sx={{
