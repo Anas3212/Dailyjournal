@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Component
 public class JournalMapper {
 
@@ -25,14 +24,16 @@ public class JournalMapper {
                         String filename = path;
                         if (path.contains("/api/journals/media/")) {
                             // Extract filename from full URL
-                            filename = path.substring(path.lastIndexOf("/api/journals/media/") + "/api/journals/media/".length());
+                            filename = path.substring(
+                                    path.lastIndexOf("/api/journals/media/") + "/api/journals/media/".length());
                         } else if (path.startsWith("http")) {
                             // Extract filename from any other full URL format
                             filename = path.substring(path.lastIndexOf("/") + 1);
                         }
-                        
+
                         // Ensure no double slashes in URL construction
-                        String cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+                        String cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1)
+                                : baseUrl;
                         return cleanBaseUrl + "/api/journals/media/" + filename;
                     })
                     .collect(Collectors.toList());
@@ -69,13 +70,13 @@ public class JournalMapper {
         resp.setEverPublished(entry.isEverPublished());
         resp.setHiddenByAdmin(entry.isHiddenByAdmin());
         resp.setMediaUrls(mediaUrls);
-        
+
         if (entry.getPages() != null && !entry.getPages().isEmpty()) {
             resp.setPages(entry.getPages());
         } else {
             resp.setPages(List.of(entry.getContent() != null ? entry.getContent() : ""));
         }
-        
+
         resp.setUserId(userId);
         resp.setUserName(userName);
         resp.setUserEmail(userEmail);
@@ -85,4 +86,3 @@ public class JournalMapper {
         return resp;
     }
 }
-

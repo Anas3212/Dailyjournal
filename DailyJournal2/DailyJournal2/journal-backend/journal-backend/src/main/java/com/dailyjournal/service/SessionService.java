@@ -656,6 +656,20 @@ public class SessionService {
         
         return sessionOpt;
     }
+
+    /**
+     * Verify that the provided JWT token hash matches the session's hash
+     */
+    public boolean verifyJwtHash(UserSession session, String jwtToken) {
+        if (session == null || jwtToken == null) return false;
+        try {
+            String incomingHash = hashToken(jwtToken);
+            return incomingHash.equals(session.getJwtTokenHash());
+        } catch (Exception e) {
+            log.error("Error verifying JWT hash: {}", e.getMessage());
+            return false;
+        }
+    }
     
     /**
      * Set secure session cookie with all security attributes

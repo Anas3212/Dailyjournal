@@ -164,11 +164,12 @@ function App() {
                 </PrivateRoute>
               } />
               
-              <Route path="/published" element={
-                <PrivateRoute>
+              <Route path="/published" element={<Navigate to="/published-journals" replace />} />
+              <Route path="/published-journals" element={
+                <>
                   <AppBar />
                   <PublishedJournals />
-                </PrivateRoute>
+                </>
               } />
               
               <Route path="/workshop" element={

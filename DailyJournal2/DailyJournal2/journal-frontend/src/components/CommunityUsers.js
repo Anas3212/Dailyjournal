@@ -115,12 +115,9 @@ function CommunityUsers({ open, onClose, currentUser }) {
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return undefined;
-    // Handle both full URLs and relative paths
-    if (profilePicture.startsWith('http')) {
-      return `${profilePicture}?t=${Date.now()}`;
-    }
+    if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.split('/').pop();
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${Date.now()}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${Date.now()}`;
   };
 
   const handleCommunityAction = async (community) => {

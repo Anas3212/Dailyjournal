@@ -5,6 +5,7 @@ import com.dailyjournal.dto.UserUpdateRequest;
 import com.dailyjournal.entity.User;
 import com.dailyjournal.mapper.UserMapper;
 import com.dailyjournal.repository.UserRepository;
+import com.dailyjournal.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ public class UserService {
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final CloudinaryService cloudinaryService;
 
     public String updateUser(Long userId, UserUpdateRequest req) {
         User user = userRepo.findById(userId)
@@ -79,24 +81,16 @@ public class UserService {
             throw new RuntimeException("Invalid file type. Only PNG, JPEG, JPG, WEBP are allowed.");
         }
 
-        // Use a proper absolute path for uploads
-        String uploadDir = System.getProperty("user.home") + File.separator + "daily-journal-uploads" + File.separator + "profile-photos" + File.separator;
-        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-
         try {
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                boolean created = dir.mkdirs();
-                if (!created) {
-                    throw new RuntimeException("Failed to create upload directory: " + uploadDir);
-                }
+            // Delete old profile picture from Cloudinary if it exists and is a Cloudinary URL
+            if (user.getProfilePicture() != null && user.getProfilePicture().startsWith("http")) {
+                cloudinaryService.delete(user.getProfilePicture());
             }
 
-            File dest = new File(uploadDir + filename);
-            file.transferTo(dest);
+            String secureUrl = cloudinaryService.upload(file);
 
-            // Store relative path for database
-            user.setProfilePicture("/profile-photos/" + filename);
+            // Store URL for database
+            user.setProfilePicture(secureUrl);
             userRepo.save(user);
 
             return "Profile picture uploaded successfully.";

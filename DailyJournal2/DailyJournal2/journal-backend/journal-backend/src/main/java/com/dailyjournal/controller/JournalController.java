@@ -381,7 +381,6 @@ public class JournalController {
     // These endpoints handle published journals that any authenticated user can
     // view
 
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/published")
     public ResponseEntity<List<JournalResponse>> getAllPublishedJournals() {
         List<JournalEntry> entries = journalService.getAllPublishedJournals();
@@ -391,7 +390,6 @@ public class JournalController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/published/search")
     public ResponseEntity<List<JournalResponse>> searchPublishedJournals(
             @RequestParam(required = false) String search,
@@ -420,7 +418,6 @@ public class JournalController {
     }
 
     // ===== PUBLISHED JOURNAL VIEW/REACTION ENDPOINTS =====
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/published/{journalId}/view")
     public ResponseEntity<PublishedStatsResponse> recordPublishedView(@PathVariable Long journalId) {
         PublishedStatsResponse stats = journalService.recordPublishedView(journalId);
@@ -436,14 +433,12 @@ public class JournalController {
         return ResponseEntity.ok(stats);
     }
 
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @GetMapping("/published/{journalId}/stats")
     public ResponseEntity<PublishedStatsResponse> getPublishedStats(@PathVariable Long journalId) {
         PublishedStatsResponse stats = journalService.getPublishedStats(journalId);
         return ResponseEntity.ok(stats);
     }
 
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping("/published/batch-stats")
     public ResponseEntity<Map<Long, PublishedStatsResponse>> getBatchPublishedStats(@RequestBody IdsRequest request) {
         Map<Long, PublishedStatsResponse> stats = journalService.getBatchPublishedStats(request.getIds());

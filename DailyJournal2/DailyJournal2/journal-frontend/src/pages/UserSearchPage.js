@@ -59,10 +59,10 @@ const UserSearchPage = () => {
                 >
                   <SearchIcon sx={{ fontSize: 32, color: 'white' }} />
                 </Box>
-                <Typography 
-                  variant="h3" 
-                  gutterBottom 
-                  sx={{ 
+                <Typography
+                  variant="h3"
+                  gutterBottom
+                  sx={{
                     fontWeight: 700,
                     color: 'white',
                     textShadow: '0 4px 8px rgba(0,0,0,0.3)'
@@ -71,9 +71,9 @@ const UserSearchPage = () => {
                   Find Users
                 </Typography>
               </Stack>
-              <Typography 
-                variant="h6" 
-                sx={{ 
+              <Typography
+                variant="h6"
+                sx={{
                   color: 'rgba(255, 255, 255, 0.9)',
                   textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                   maxWidth: 600,
@@ -86,9 +86,9 @@ const UserSearchPage = () => {
             </Box>
 
             {/* Search Section */}
-            <Paper 
-              elevation={24} 
-              sx={{ 
+            <Paper
+              elevation={24}
+              sx={{
                 p: { xs: 3, sm: 4, md: 5 },
                 borderRadius: 4,
                 background: 'rgba(255, 255, 255, 0.95)',

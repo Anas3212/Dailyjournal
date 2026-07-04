@@ -427,20 +427,18 @@ export default function Teams() {
     <ThemeProvider theme={localTheme}>
       <Box sx={{ 
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         py: 4
       }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="xl">
           {/* Header Section */}
           <Paper 
-            elevation={0} 
+            elevation={4} 
             sx={{ 
               p: 4, 
               mb: 4, 
               borderRadius: 3,
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
+              background: 'white'
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
@@ -494,13 +492,13 @@ export default function Teams() {
               elevation={0}
               sx={{ 
                 p: 3, 
-                background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                background: '#f8fafc',
                 borderRadius: 2,
                 border: '1px solid #e2e8f0'
               }}
             >
               <Stack spacing={2}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="center">
                   <TextField
                     label="Team Name"
                     placeholder="Enter your team name..."
@@ -508,7 +506,7 @@ export default function Teams() {
                     onChange={(e) => setName(e.target.value)}
                     required
                     fullWidth
-                    sx={{ maxWidth: { sm: 300 } }}
+                    sx={{ maxWidth: { sm: 400 }, '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }}
                   />
                   <TextField
                     label="Community (Optional)"
@@ -516,7 +514,7 @@ export default function Teams() {
                     value={community}
                     onChange={(e) => setCommunity(e.target.value)}
                     fullWidth
-                    sx={{ maxWidth: { sm: 300 } }}
+                    sx={{ maxWidth: { sm: 400 }, '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }}
                   />
                   <Button 
                     type="submit" 
@@ -526,8 +524,11 @@ export default function Teams() {
                     sx={{ 
                       px: 4, 
                       py: 1.5,
-                      minWidth: 140,
-                      borderRadius: 3
+                      minWidth: 160,
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      boxShadow: '0 4px 14px 0 rgba(102,126,234,0.39)',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     }}
                   >
                     Create Team
@@ -541,7 +542,7 @@ export default function Teams() {
           {loading && (
             <Grid container spacing={3}>
               {Array.from({ length: 6 }).map((_, i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
                   <Fade in timeout={300 + i * 100}>
                     <Card sx={{ height: 320 }}>
                       <CardHeader 
@@ -572,7 +573,7 @@ export default function Teams() {
           {!loading && (
             <Grid container spacing={3}>
               {(teams || []).map((t, index) => (
-                <Grid item xs={12} sm={6} md={4} key={t.id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={t.id}>
                   <Fade in timeout={300 + index * 100}>
                     <Card sx={{ 
                       height: '100%',
@@ -588,16 +589,17 @@ export default function Teams() {
                               width: 56, 
                               height: 56,
                               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                              fontSize: '1.2rem',
-                              fontWeight: 700
+                              fontSize: '1.5rem',
+                              fontWeight: 700,
+                              boxShadow: '0 4px 10px rgba(102, 126, 234, 0.4)'
                             }}
                           >
                             {initials(t.name)}
                           </Avatar>
                         }
                         title={
-                          <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
                               {t.name}
                             </Typography>
                             {(() => {
@@ -615,8 +617,10 @@ export default function Teams() {
                                   sx={{
                                     backgroundColor: config.bg,
                                     color: `${config.color}.dark`,
-                                    fontWeight: 600,
-                                    border: 'none'
+                                    fontWeight: 700,
+                                    border: 'none',
+                                    height: 24,
+                                    '& .MuiChip-label': { px: 1 }
                                   }}
                                 />
                               );
@@ -624,12 +628,12 @@ export default function Teams() {
                           </Box>
                         }
                         subheader={
-                          <Box sx={{ mt: 1 }}>
-                            <Typography variant="body2" color="text.secondary">
+                          <Box sx={{ mt: 0.5 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                               Owner: {t.ownerName || 'Unknown'}
                             </Typography>
                             {t.community && (
-                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
                                 Community: {t.community}
                               </Typography>
                             )}
@@ -643,8 +647,8 @@ export default function Teams() {
                                   color="primary" 
                                   onClick={() => openEdit(t)}
                                   sx={{ 
-                                    backgroundColor: '#e0f2fe',
-                                    '&:hover': { backgroundColor: '#b3e5fc' }
+                                    backgroundColor: '#f1f5f9',
+                                    '&:hover': { backgroundColor: '#e2e8f0' }
                                   }}
                                 >
                                   <EditIcon />
@@ -700,33 +704,32 @@ export default function Teams() {
                       
                       <CardActions sx={{ 
                         p: 2, 
-                        pt: 0,
-                        flexDirection: 'column',
-                        gap: 1,
-                        alignItems: 'stretch'
+                        pt: 2,
+                        mt: 'auto',
+                        borderTop: '1px solid #f1f5f9'
                       }}>
-                        <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
+                        <Stack direction="row" spacing={1.5} sx={{ width: '100%' }}>
                           {/* Team Management - Only MASTER can manage members */}
                           {t.role === 'MASTER' && (
                             <Button 
-                              size="small" 
+                              size="medium" 
                               startIcon={<ManageAccountsIcon />} 
                               onClick={() => navigate(`/teams/${t.id}`)}
                               variant="outlined"
-                              sx={{ flex: 1 }}
+                              sx={{ flex: 1, borderRadius: 2, fontWeight: 600 }}
                             >
-                              Manage
+                              Manage Team
                             </Button>
                           )}
                           
                           {/* View Team - All roles can view team details */}
                           {t.role !== 'MASTER' && (
                             <Button 
-                              size="small" 
+                              size="medium" 
                               variant="outlined" 
                               startIcon={<GroupIcon />} 
                               onClick={() => navigate(`/teams/${t.id}`)}
-                              sx={{ flex: 1 }}
+                              sx={{ flex: 1, borderRadius: 2, fontWeight: 600 }}
                             >
                               View Team
                             </Button>
@@ -735,21 +738,30 @@ export default function Teams() {
                           {/* Journal Management - ADMIN and MASTER */}
                           {(t.role === 'ADMIN' || t.role === 'MASTER') ? (
                             <Button 
-                              size="small" 
+                              size="medium" 
                               variant="contained" 
-                              startIcon={<EditIcon />} 
+                              startIcon={<ArticleIcon />} 
                               onClick={() => navigate(`/teams/${t.id}/journals`)}
-                              sx={{ flex: 1 }}
+                              sx={{ 
+                                flex: 1, 
+                                borderRadius: 2, 
+                                fontWeight: 600,
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                boxShadow: '0 4px 14px 0 rgba(102,126,234,0.39)',
+                                '&:hover': {
+                                  boxShadow: '0 6px 20px rgba(102,126,234,0.23)'
+                                }
+                              }}
                             >
                               Journals
                             </Button>
                           ) : (
                             <Button 
-                              size="small" 
+                              size="medium" 
                               variant="outlined" 
                               startIcon={<Visibility />} 
                               onClick={() => navigate(`/teams/${t.id}/journals`)}
-                              sx={{ flex: 1 }}
+                              sx={{ flex: 1, borderRadius: 2, fontWeight: 600 }}
                             >
                               View Journals
                             </Button>

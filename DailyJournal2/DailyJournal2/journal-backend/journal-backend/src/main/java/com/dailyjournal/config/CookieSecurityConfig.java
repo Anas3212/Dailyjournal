@@ -53,6 +53,9 @@ public class CookieSecurityConfig {
                                                                 "/uploads/**",
                                                                 "/api/journals/media/**",
                                                                 "/api/reports/reasons",
+                                                                "/api/journals/published",
+                                                                "/api/journals/published/**",
+                                                                "/api/discussions/journal/**",
                                                                 "/error")
                                                 .permitAll()
 

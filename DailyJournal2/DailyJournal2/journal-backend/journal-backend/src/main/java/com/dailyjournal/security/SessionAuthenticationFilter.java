@@ -26,6 +26,7 @@ import java.util.Optional;
 public class SessionAuthenticationFilter extends OncePerRequestFilter {
     
     private final SessionService sessionService;
+    private final CookieJWTService cookieJWTService;
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -38,7 +39,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             if (authentication != null && authentication.isAuthenticated() && 
                 !"anonymousUser".equals(authentication.getPrincipal())) {
                 
-                // Try to extract and validate session with sliding expiration
+                // Enforce session presence
                 Optional<String> sessionIdOpt = sessionService.extractSessionId(request);
                 
                 if (sessionIdOpt.isPresent()) {
@@ -46,13 +47,33 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                     // Use validateAndRefreshSession for automatic sliding expiration
                     Optional<UserSession> sessionOpt = sessionService.validateAndRefreshSession(sessionId);
                     
-                    if (sessionOpt.isEmpty()) {
-                        // Session is invalid/expired - clear cookie but continue request
-                        log.debug("Invalid/expired session {} - clearing cookie", sessionId);
+                    boolean sessionValid = sessionOpt.isPresent();
+                    
+                    // Additionally verify JWT hash matches session
+                    if (sessionValid) {
+                        UserSession session = sessionOpt.get();
+                        Optional<String> jwtTokenOpt = cookieJWTService.extractAccessTokenFromCookies(request);
+                        if (jwtTokenOpt.isPresent()) {
+                            boolean hashMatches = sessionService.verifyJwtHash(session, jwtTokenOpt.get());
+                            if (!hashMatches) {
+                                log.warn("JWT hash mismatch for session: {}", sessionId);
+                                sessionValid = false;
+                            }
+                        } else {
+                            sessionValid = false;
+                        }
+                    }
+
+                    if (!sessionValid) {
+                        // Session is invalid/expired - clear cookie and authentication context
+                        log.warn("Invalid/expired session {} - clearing authentication context", sessionId);
                         sessionService.clearSessionCookie(response);
                         
-                        // Add header to indicate session expiry for frontend handling
-                        response.addHeader("X-Session-Expired", "true");
+                        SecurityContextHolder.clearContext();
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"Session expired or revoked\",\"code\":\"SESSION_EXPIRED\"}");
+                        return; // Stop filter chain
                     } else {
                         UserSession session = sessionOpt.get();
                         // Session is valid - add to request attributes for potential use
@@ -66,8 +87,14 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                                 sessionId, request.getRequestURI(), session.getExpiresAt());
                     }
                 } else {
-                    // No session cookie but user is authenticated via JWT - this is normal
-                    log.trace("No session cookie for authenticated request: {}", request.getRequestURI());
+                    // No session cookie but user is authenticated via JWT.
+                    // We must enforce dual-layer security.
+                    log.warn("No session cookie for authenticated request: {}. Enforcing session presence.", request.getRequestURI());
+                    SecurityContextHolder.clearContext();
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Session required\",\"code\":\"SESSION_MISSING\"}");
+                    return; // Stop filter chain
                 }
             }
             
@@ -88,7 +115,9 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/api/auth/") || 
                path.startsWith("/api/users/register") ||
                path.startsWith("/api/journals/public/") ||
+               path.startsWith("/api/journals/published") ||
                path.startsWith("/api/journals/media/") ||
+               path.startsWith("/api/discussions/journal/") ||
                path.startsWith("/uploads/") ||
                path.startsWith("/error") ||
                path.startsWith("/actuator/") ||

@@ -57,6 +57,9 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
   const lockIntervalRef = useRef(null);
   const sessionId = useRef(Math.random().toString(36).substring(7));
 
+  // Saving state to prevent duplicates
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     setTitle(initialData?.title || '');
     setPages(
@@ -171,6 +174,8 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
     setTags(tags.filter(tag => tag !== tagToDelete));
   };
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       // Convert mediaUrls back to mediaPaths (extract filenames from URLs)
       // Only include mediaPaths if we have media URLs to preserve
@@ -212,6 +217,8 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
       }
     } catch (error) {
       console.error('Save failed:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -385,9 +392,10 @@ function JournalEditor({ open, onClose, onSave, initialData, readOnly, isTeamJou
           <Button 
             onClick={handleSave} 
             variant="contained"
-            disabled={isTeamJournal && initialData?.id && !isLocked && !lockError}
+            disabled={isSaving || (isTeamJournal && initialData?.id && !isLocked && !lockError)}
+            startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            Save
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         )}
       </DialogActions>

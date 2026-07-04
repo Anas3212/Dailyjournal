@@ -58,8 +58,9 @@ const FriendSearch = ({ onUserSelect, excludeUserIds = [] }) => {
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return undefined;
+    if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.split('/').pop();
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${Date.now()}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${Date.now()}`;
   };
 
   const handleSelectFriend = (friend) => {

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  Box, TextField, Button, Typography, Paper, List, ListItem, 
+import {
+  Box, TextField, Button, Typography, Paper, List, ListItem,
   ListItemText, ListItemAvatar, Avatar, Divider, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, CardHeader,
   InputAdornment, Grid, Chip, Fade, Slide
 } from '@mui/material';
-import { 
-  Search as SearchIcon, 
-  Person as PersonIcon, 
-  Visibility as VisibilityIcon, 
+import {
+  Search as SearchIcon,
+  Person as PersonIcon,
+  Visibility as VisibilityIcon,
   PersonAdd as PersonAddIcon,
   Email as EmailIcon,
   AdminPanelSettings as AdminIcon
@@ -29,14 +29,14 @@ const UserSearch = () => {
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
-    
+
     setLoading(true);
     setSearched(true);
-    
+
     try {
       const response = await searchUsers(searchTerm);
       setUsers(response.data);
-      
+
       // Check friend request status for all users
       response.data.forEach(user => {
         checkFriendRequestStatus(user.id);
@@ -65,20 +65,20 @@ const UserSearch = () => {
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return undefined;
-    // Extract filename from stored path like "/profile-photos/123456_image.jpg"
+    if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.split('/').pop();
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${Date.now()}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${Date.now()}`;
   };
-  
+
   const handleUserClick = (user) => {
     setSelectedUser(user);
     setUserDetailOpen(true);
   };
-  
+
   const handleCloseUserDetail = () => {
     setUserDetailOpen(false);
   };
-  
+
   const handleViewUserJournals = (userId) => {
     navigate(`/user-journals/${userId}`);
   };
@@ -118,7 +118,7 @@ const UserSearch = () => {
 
   const renderFriendButton = (userId) => {
     const status = friendRequestStatus[userId];
-    
+
     switch (status) {
       case 'FRIENDS':
         return (
@@ -181,8 +181,8 @@ const UserSearch = () => {
     <Box>
       {/* Search Header */}
       <Box textAlign="center" mb={4}>
-        <Typography 
-          variant="h4" 
+        <Typography
+          variant="h4"
           gutterBottom
           sx={{
             fontWeight: 700,
@@ -199,12 +199,12 @@ const UserSearch = () => {
           Find and connect with other journal writers
         </Typography>
       </Box>
-      
+
       {/* Enhanced Search Bar */}
       <Box sx={{ mb: 4 }}>
-        <Box 
-          sx={{ 
-            display: 'flex', 
+        <Box
+          sx={{
+            display: 'flex',
             gap: 2,
             alignItems: 'center',
             p: 2,
@@ -275,7 +275,7 @@ const UserSearch = () => {
 
       {loading && (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 6 }}>
-          <CircularProgress 
+          <CircularProgress
             size={60}
             sx={{
               color: '#667eea',
@@ -290,9 +290,9 @@ const UserSearch = () => {
 
       {!loading && searched && users.length === 0 && (
         <Fade in timeout={400}>
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
+          <Box
+            sx={{
+              textAlign: 'center',
               py: 6,
               px: 4,
               borderRadius: 3,
@@ -300,16 +300,16 @@ const UserSearch = () => {
               border: '1px solid rgba(102, 126, 234, 0.1)'
             }}
           >
-            <SearchIcon 
-              sx={{ 
-                fontSize: 64, 
+            <SearchIcon
+              sx={{
+                fontSize: 64,
                 color: 'rgba(102, 126, 234, 0.3)',
                 mb: 2
-              }} 
+              }}
             />
-            <Typography 
-              variant="h6" 
-              color="text.secondary" 
+            <Typography
+              variant="h6"
+              color="text.secondary"
               gutterBottom
               sx={{ fontWeight: 600 }}
             >
@@ -328,7 +328,7 @@ const UserSearch = () => {
             {users.map((user, index) => (
               <Grid item xs={12} sm={6} md={4} key={user.id}>
                 <Slide direction="up" in timeout={300 + index * 100}>
-                  <Card 
+                  <Card
                     sx={{
                       height: '100%',
                       cursor: 'pointer',
@@ -346,11 +346,11 @@ const UserSearch = () => {
                     onClick={() => handleUserClick(user)}
                   >
                     <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                      <Avatar 
+                      <Avatar
                         src={getProfilePhotoUrl(user.profilePicture)}
-                        sx={{ 
-                          width: 64, 
-                          height: 64, 
+                        sx={{
+                          width: 64,
+                          height: 64,
                           margin: '0 auto 16px',
                           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                           fontSize: '1.5rem',
@@ -360,11 +360,11 @@ const UserSearch = () => {
                       >
                         {getInitials(user.name)}
                       </Avatar>
-                      
-                      <Typography 
-                        variant="h6" 
+
+                      <Typography
+                        variant="h6"
                         gutterBottom
-                        sx={{ 
+                        sx={{
                           fontWeight: 600,
                           color: '#2d3748',
                           mb: 1
@@ -372,18 +372,18 @@ const UserSearch = () => {
                       >
                         {user.name}
                       </Typography>
-                      
+
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
                         <EmailIcon sx={{ fontSize: 16, color: '#667eea', mr: 1 }} />
-                        <Typography 
-                          variant="body2" 
+                        <Typography
+                          variant="body2"
                           color="text.secondary"
                           sx={{ fontSize: '0.9rem' }}
                         >
                           {user.email}
                         </Typography>
                       </Box>
-                      
+
                       {user.roles && (
                         <Box sx={{ mb: 2 }}>
                           {user.roles.map(role => (
@@ -394,7 +394,7 @@ const UserSearch = () => {
                               icon={role.name === 'ROLE_ADMIN' ? <AdminIcon /> : <PersonIcon />}
                               sx={{
                                 mr: 0.5,
-                                background: role.name === 'ROLE_ADMIN' 
+                                background: role.name === 'ROLE_ADMIN'
                                   ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)'
                                   : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                 color: 'white',
@@ -407,7 +407,7 @@ const UserSearch = () => {
                           ))}
                         </Box>
                       )}
-                      
+
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mt: 2, flexDirection: 'column' }}>
                         <Button
                           variant="contained"
@@ -464,7 +464,7 @@ const UserSearch = () => {
           </Grid>
         </Fade>
       )}
-      
+
       {/* User Detail Dialog */}
       <Dialog
         open={userDetailOpen}

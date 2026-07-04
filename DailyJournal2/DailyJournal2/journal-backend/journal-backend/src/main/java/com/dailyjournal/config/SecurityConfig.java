@@ -59,7 +59,10 @@ public class SecurityConfig {
                                                                 "/v3/api-docs/**",
                                                                 "/api/users/profile-photo/**",
                                                                 "/uploads/**",
-                                                                "/api/reports/reasons")
+                                                                "/api/reports/reasons",
+                                                                "/api/journals/published",
+                                                                "/api/journals/published/**",
+                                                                "/api/discussions/journal/**")
                                                 .permitAll()
                                                 // Media endpoints - allow both authenticated and unauthenticated access
                                                 .requestMatchers("/api/journals/media/**").permitAll()
@@ -87,6 +90,10 @@ public class SecurityConfig {
                                                                 "/api/admin/**")
                                                 .hasRole("ADMIN")
                                                 .anyRequest().authenticated())
+                                // Return 401 Unauthorized instead of 403 Forbidden for missing credentials
+                                .exceptionHandling(e -> e.authenticationEntryPoint(
+                                                new org.springframework.security.web.authentication.HttpStatusEntryPoint(
+                                                                org.springframework.http.HttpStatus.UNAUTHORIZED)))
                                 // Add JWT authentication filter first
                                 .addFilterBefore(cookieJWTFilter, UsernamePasswordAuthenticationFilter.class)
                                 // Add session management filter after JWT authentication

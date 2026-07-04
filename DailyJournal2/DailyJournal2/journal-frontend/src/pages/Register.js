@@ -1,25 +1,26 @@
-import React, { useState, useContext } from 'react';
-import { 
-  TextField, 
-  Button, 
-  Box, 
-  Typography, 
-  Paper, 
-  Alert, 
+import React, { useState, useContext, useEffect } from 'react';
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Paper,
+  Alert,
   Container,
   InputAdornment,
   IconButton,
   Fade,
   Slide
 } from '@mui/material';
-import { 
+import {
   Person as PersonIcon,
-  Email as EmailIcon, 
-  Lock as LockIcon, 
-  Visibility, 
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Visibility,
   VisibilityOff,
   PersonAdd as RegisterIcon,
-  Login as LoginIcon
+  Login as LoginIcon,
+  Explore as ExploreIcon
 } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -33,6 +34,34 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const quotes = [
+    "Every entry is a step towards self-discovery.",
+    "Write your thoughts today, create your better tomorrow.",
+    "Paper has more patience than people.",
+    "Your life is your story. Write well. Edit often.",
+    "Journaling is like whispering to one's self and listening at the same time.",
+    "Document the moments you feel most in love with yourself.",
+    "A personal journal is an ideal environment in which to become.",
+    "What a comfort is this journal. I tell myself to myself.",
+    "Fill your paper with the breathings of your heart.",
+    "Keep a notebook. Travel with it, eat with it, sleep with it."
+  ];
+
+  const [quoteIndex, setQuoteIndex] = useState(1); // Start at index 1 for variety
+  const [fadeQuote, setFadeQuote] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeQuote(false);
+      setTimeout(() => {
+        setQuoteIndex((prev) => (prev + 1) % quotes.length);
+        setFadeQuote(true);
+      }, 800);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,7 +85,8 @@ function Register() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        background: 'url("/images/register_bg_v3.png") no-repeat center center fixed',
+        backgroundSize: 'cover',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -69,12 +99,115 @@ function Register() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpolygon points="30,0 60,30 30,60 0,30"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-          opacity: 0.3
+          background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)',
+          zIndex: 0
         }
       }}
     >
-      <Container maxWidth="sm">
+      <Box
+        sx={{
+          position: 'absolute',
+          top: { xs: 40, md: 80 },
+          left: { xs: 20, md: 80 },
+          zIndex: 1,
+          maxWidth: 350,
+          textAlign: 'left',
+          display: { xs: 'none', md: 'block' }
+        }}
+      >
+        <Fade in={fadeQuote} timeout={800}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: 'white',
+              fontStyle: 'italic',
+              fontWeight: 300,
+              textShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              fontFamily: '"Caveat", "Dancing Script", cursive, "Segoe UI"',
+              lineHeight: 1.4
+            }}
+          >
+            "{quotes[quoteIndex]}"
+          </Typography>
+        </Fade>
+      </Box>
+
+      {/* Explore Published Journals on the right */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: { xs: 'auto', md: '50%' },
+          bottom: { xs: 40, md: 'auto' },
+          right: { xs: 'auto', md: 80 },
+          left: { xs: '50%', md: 'auto' },
+          transform: { xs: 'translateX(-50%)', md: 'translateY(-50%)' },
+          zIndex: 1,
+          maxWidth: { xs: '90%', md: 350 },
+          textAlign: { xs: 'center', md: 'right' }
+        }}
+      >
+        <Fade in timeout={1200}>
+          <Box>
+            <Typography
+              variant="h3"
+              sx={{
+                color: 'white',
+                fontWeight: 800,
+                mb: 2,
+                textShadow: '0 4px 15px rgba(0,0,0,0.6)',
+                display: { xs: 'none', md: 'block' },
+                lineHeight: 1.2
+              }}
+            >
+              Discover <br />
+              <span style={{ color: '#4facfe' }}>Inspiring</span> <br />
+              Journeys.
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                mb: 4,
+                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                fontSize: '1.1rem',
+                display: { xs: 'none', md: 'block' }
+              }}
+            >
+              Take a peek into our public community. See what others are sharing and find inspiration for your own daily journal.
+            </Typography>
+            <Button
+              component={Link}
+              to="/published-journals"
+              variant="contained"
+              size="large"
+              startIcon={<ExploreIcon />}
+              sx={{
+                borderRadius: 8,
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(15px)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                px: 4,
+                py: 1.5,
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                '&:hover': {
+                  background: 'rgba(255, 255, 255, 0.25)',
+                  transform: 'translateY(-5px) scale(1.02)',
+                  borderColor: 'white',
+                  boxShadow: '0 15px 40px rgba(0, 0, 0, 0.4)'
+                }
+              }}
+            >
+              Explore Community
+            </Button>
+          </Box>
+        </Fade>
+      </Box>
+
+      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 2 }}>
         <Fade in timeout={800}>
           <Paper
             elevation={24}
@@ -99,37 +232,37 @@ function Register() {
           >
             <Slide direction="down" in timeout={600}>
               <Box textAlign="center" mb={4}>
-                <Box
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 24px',
-                    boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)'
-                  }}
-                >
-                  <RegisterIcon sx={{ fontSize: 40, color: 'white' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)'
+                    }}
+                  >
+                    <RegisterIcon sx={{ fontSize: 28, color: 'white' }} />
+                  </Box>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      m: 0
+                    }}
+                  >
+                    Join Daily Journal
+                  </Typography>
                 </Box>
-                <Typography 
-                  variant="h4" 
-                  gutterBottom 
-                  sx={{ 
-                    fontWeight: 700,
-                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    mb: 1
-                  }}
-                >
-                  Join Daily Journal
-                </Typography>
-                <Typography 
-                  variant="body1" 
+                <Typography
+                  variant="body1"
                   color="text.secondary"
                   sx={{ fontSize: '1.1rem' }}
                 >
@@ -243,12 +376,12 @@ function Register() {
                     }
                   }}
                 />
-                
+
                 {error && (
                   <Slide direction="left" in timeout={300}>
-                    <Alert 
-                      severity="error" 
-                      sx={{ 
+                    <Alert
+                      severity="error"
+                      sx={{
                         mb: 3,
                         borderRadius: 2,
                         '& .MuiAlert-icon': {
@@ -260,13 +393,13 @@ function Register() {
                     </Alert>
                   </Slide>
                 )}
-                
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  fullWidth 
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
                   disabled={loading}
-                  sx={{ 
+                  sx={{
                     py: 1.5,
                     borderRadius: 2,
                     fontSize: '1.1rem',
@@ -291,8 +424,8 @@ function Register() {
                   {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
 
-                <Box 
-                  textAlign="center" 
+                <Box
+                  textAlign="center"
                   mt={4}
                   sx={{
                     borderTop: '1px solid rgba(0, 0, 0, 0.1)',
@@ -323,6 +456,8 @@ function Register() {
                     Sign In
                   </Button>
                 </Box>
+
+
               </Box>
             </Slide>
           </Paper>

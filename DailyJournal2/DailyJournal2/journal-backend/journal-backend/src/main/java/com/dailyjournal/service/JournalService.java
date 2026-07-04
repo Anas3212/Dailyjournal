@@ -698,16 +698,18 @@ public class JournalService {
 
     public PublishedStatsResponse recordPublishedView(Long journalId) {
         JournalEntry journal = ensurePublishedVisible(journalId);
-        User currentUser = getCurrentUser();
-        java.time.LocalDate today = java.time.LocalDate.now();
-        boolean exists = journalViewRepository.existsByJournal_IdAndUser_IdAndViewDate(journal.getId(), currentUser.getId(), today);
-        if (!exists) {
-            JournalView view = new JournalView();
-            view.setJournal(journal);
-            view.setUser(currentUser);
-            view.setViewDate(today);
-            view.setCreatedAt(java.time.LocalDateTime.now());
-            journalViewRepository.save(view);
+        User currentUser = getCurrentUserIfAny();
+        if (currentUser != null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            boolean exists = journalViewRepository.existsByJournal_IdAndUser_IdAndViewDate(journal.getId(), currentUser.getId(), today);
+            if (!exists) {
+                JournalView view = new JournalView();
+                view.setJournal(journal);
+                view.setUser(currentUser);
+                view.setViewDate(today);
+                view.setCreatedAt(java.time.LocalDateTime.now());
+                journalViewRepository.save(view);
+            }
         }
         return getPublishedStats(journalId);
     }

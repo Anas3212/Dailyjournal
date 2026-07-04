@@ -314,10 +314,11 @@ const DiscussionViewer = ({ discussionId, onClose }) => {
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return null;
+    if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.includes('/') 
       ? profilePicture.split('/').pop() 
       : profilePicture;
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${Date.now()}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${Date.now()}`;
   };
 
   const renderAnswer = (answer, isReply = false) => (

@@ -130,6 +130,8 @@ public class CookieJWTFilter extends OncePerRequestFilter {
                uri.startsWith("/api/users/profile-photo/") ||
                uri.startsWith("/uploads/") ||
                uri.equals("/api/reports/reasons") ||
+               uri.startsWith("/api/journals/published") ||
+               uri.startsWith("/api/discussions/journal/") ||
                uri.startsWith("/error");
     }
 

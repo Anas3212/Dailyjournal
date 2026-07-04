@@ -172,9 +172,9 @@ function UserProfile() {
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return undefined;
-    // Extract filename from stored path like "/profile-photos/123456_image.jpg"
+    if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.split('/').pop();
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${Date.now()}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${Date.now()}`;
   };
 
   const handleOpenProfileImage = () => {

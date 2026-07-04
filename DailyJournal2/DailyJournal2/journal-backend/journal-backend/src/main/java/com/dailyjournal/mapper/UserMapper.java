@@ -22,9 +22,9 @@ public class UserMapper {
         dto.setEmail(user.getEmail());
         dto.setCommunity(user.getCommunity());
 
-        // ✅ Convert stored filename to full URL
+        // ✅ Keep the stored URL/path as is
         if (user.getProfilePicture() != null) {
-            dto.setProfilePicture(baseUrl + user.getProfilePicture());
+            dto.setProfilePicture(user.getProfilePicture());
         }
 
         // Map roles to RoleDTO
@@ -50,13 +50,7 @@ public class UserMapper {
         user.setEmail(dto.getEmail());
         user.setCommunity(dto.getCommunity());
 
-        // Since the DTO now has full URL, remove base URL before saving (optional)
-        if (dto.getProfilePicture() != null && dto.getProfilePicture().startsWith(baseUrl)) {
-            String relativePath = dto.getProfilePicture().substring(baseUrl.length());
-            user.setProfilePicture(relativePath);
-        } else {
-            user.setProfilePicture(dto.getProfilePicture());
-        }
+        user.setProfilePicture(dto.getProfilePicture());
 
         return user;
     }

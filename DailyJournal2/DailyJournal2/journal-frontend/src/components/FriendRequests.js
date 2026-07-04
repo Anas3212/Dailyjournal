@@ -21,7 +21,8 @@ import {
   CardActions,
   Container,
   Fade,
-  Slide
+  Slide,
+  Grid
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -168,100 +169,103 @@ const FriendRequests = () => {
     }
 
     return (
-      <List sx={{ p: 0 }}>
+      <Grid container spacing={3}>
         {pendingRequests.map((request, index) => (
-          <Slide direction="up" in timeout={600 + index * 100} key={request.id}>
-            <Card 
-              sx={{ 
-                mb: 3,
-                borderRadius: 3,
-                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(102, 126, 234, 0.2)',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.15)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.25)'
-                }
-              }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={request.id}>
+            <Slide direction="up" in timeout={600 + index * 100}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 3,
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(102, 126, 234, 0.2)',
+                  boxShadow: '0 8px 32px rgba(102, 126, 234, 0.15)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(102, 126, 234, 0.25)'
+                  }
+                }}>
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                  <Avatar sx={{ width: 80, height: 80, mb: 2, bgcolor: 'primary.main', fontSize: '2rem', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }}>
                     {getInitials(request.sender.name)}
                   </Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6">
-                      {request.sender.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {request.sender.email}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Sent: {formatDate(request.createdAt)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-              <CardActions sx={{ p: 2, pt: 0 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<CloseIcon />}
-                  onClick={() => handleRejectRequest(request.id)}
-                  disabled={processingRequest === request.id}
-                  size="small"
-                  sx={{ 
-                    mr: 1,
-                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #ee5a24 0%, #ff6b6b 100%)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 20px rgba(255, 107, 107, 0.4)'
-                    },
-                    '&:disabled': {
-                      background: 'rgba(255, 107, 107, 0.3)',
-                      color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                  }}
-                >
-                  {processingRequest === request.id ? 'Processing...' : 'Reject'}
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<CheckIcon />}
-                  onClick={() => handleAcceptRequest(request.id)}
-                  disabled={processingRequest === request.id}
-                  size="small"
-                  sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)'
-                    },
-                    '&:disabled': {
-                      background: 'rgba(102, 126, 234, 0.3)',
-                      color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                  }}
-                >
-                  {processingRequest === request.id ? 'Processing...' : 'Accept'}
-                </Button>
-              </CardActions>
-            </Card>
-          </Slide>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {request.sender.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap sx={{ width: '100%' }}>
+                    {request.sender.email}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Sent: {formatDate(request.createdAt)}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ p: 2, pt: 0, display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<CloseIcon />}
+                    onClick={() => handleRejectRequest(request.id)}
+                    disabled={processingRequest === request.id}
+                    size="small"
+                    sx={{ 
+                      flex: 1,
+                      ml: '0 !important',
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #ee5a24 0%, #ff6b6b 100%)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 6px 20px rgba(255, 107, 107, 0.4)'
+                      },
+                      '&:disabled': {
+                        background: 'rgba(255, 107, 107, 0.3)',
+                        color: 'rgba(255, 255, 255, 0.7)'
+                      }
+                    }}
+                  >
+                    {processingRequest === request.id ? '...' : 'Reject'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<CheckIcon />}
+                    onClick={() => handleAcceptRequest(request.id)}
+                    disabled={processingRequest === request.id}
+                    size="small"
+                    sx={{
+                      flex: 1,
+                      ml: '0 !important',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)'
+                      },
+                      '&:disabled': {
+                        background: 'rgba(102, 126, 234, 0.3)',
+                        color: 'rgba(255, 255, 255, 0.7)'
+                      }
+                    }}
+                  >
+                    {processingRequest === request.id ? '...' : 'Accept'}
+                  </Button>
+                </CardActions>
+              </Card>
+            </Slide>
+          </Grid>
         ))}
-      </List>
+      </Grid>
     );
   };
 
@@ -289,53 +293,53 @@ const FriendRequests = () => {
     }
 
     return (
-      <List sx={{ p: 0 }}>
+      <Grid container spacing={3}>
         {sentRequests.map((request, index) => (
-          <Slide direction="up" in timeout={600 + index * 100} key={request.id}>
-            <Card 
-              sx={{ 
-                mb: 3,
-                borderRadius: 3,
-                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(102, 126, 234, 0.15)',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.2)'
-                }
-              }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar sx={{ mr: 2, bgcolor: 'secondary.main' }}>
-                      {getInitials(request.receiver.name)}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6">
-                        {request.receiver.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {request.receiver.email}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Sent: {formatDate(request.createdAt)}
-                      </Typography>
-                    </Box>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={request.id}>
+            <Slide direction="up" in timeout={600 + index * 100}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 3,
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(102, 126, 234, 0.15)',
+                  boxShadow: '0 8px 32px rgba(102, 126, 234, 0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 40px rgba(102, 126, 234, 0.2)'
+                  }
+                }}>
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                  <Avatar sx={{ width: 80, height: 80, mb: 2, bgcolor: 'secondary.main', fontSize: '2rem', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }}>
+                    {getInitials(request.receiver.name)}
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {request.receiver.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap sx={{ width: '100%' }}>
+                    {request.receiver.email}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Sent: {formatDate(request.createdAt)}
+                  </Typography>
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                    <Chip
+                      label="Pending"
+                      color="warning"
+                      size="small"
+                      icon={<PendingIcon />}
+                    />
                   </Box>
-                  <Chip
-                    label="Pending"
-                    color="warning"
-                    size="small"
-                    icon={<PendingIcon />}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Slide>
+                </CardContent>
+              </Card>
+            </Slide>
+          </Grid>
         ))}
-      </List>
+      </Grid>
     );
   };
 
@@ -343,26 +347,22 @@ const FriendRequests = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         py: 4,
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-          opacity: 0.3
-        }
+        position: 'relative'
       }}
     >
-      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
         <Fade in timeout={800}>
           <Box>
             {/* Modern Header Section */}
-            <Box mb={4}>
+            <Paper elevation={8} sx={{ 
+              p: 4, 
+              mb: 4, 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              borderRadius: 3
+            }}>
               <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
                 <Box
                   sx={{
@@ -406,9 +406,7 @@ const FriendRequests = () => {
               >
                 Manage your friend connections and build your network
               </Typography>
-            </Box>
-
-            {/* Main Content Container */}
+            </Paper>            {/* Main Content Container */}
             <Paper 
               elevation={24} 
               sx={{ 

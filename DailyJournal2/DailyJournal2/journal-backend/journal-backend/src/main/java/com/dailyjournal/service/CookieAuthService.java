@@ -175,9 +175,29 @@ public class CookieAuthService {
             throw new RuntimeException("Refresh token expired or invalid");
         }
 
+        // --- NEW: Session validation ---
+        Optional<String> sessionIdOpt = sessionService.extractSessionId(request);
+        if (sessionIdOpt.isEmpty()) {
+            throw new RuntimeException("Session required for token refresh");
+        }
+        
+        String sessionId = sessionIdOpt.get();
+        Optional<com.dailyjournal.entity.UserSession> sessionOpt = sessionService.validateSession(sessionId);
+        
+        if (sessionOpt.isEmpty()) {
+            cookieJWTService.clearAuthCookies(response);
+            sessionService.clearSessionCookie(response);
+            throw new RuntimeException("Session expired or revoked");
+        }
+        // --- END NEW ---
+
         // Generate new access token
         String newAccessToken = cookieJWTService.generateAccessToken(user.getEmail());
         cookieJWTService.setAccessTokenCookie(response, newAccessToken);
+
+        // --- NEW: Update Session JWT Hash ---
+        sessionService.updateSessionJwt(sessionId, newAccessToken);
+        // --- END NEW ---
 
         // Check if user is admin
         boolean isAdmin = user.getRoles().stream()

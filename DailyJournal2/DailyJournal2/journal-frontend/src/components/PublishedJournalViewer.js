@@ -85,6 +85,13 @@ function PublishedJournalViewer({
     setCurrentPageIndex(0);
   }, [entry?.id]);
 
+  // Sync stats when propStats changes
+  useEffect(() => {
+    if (propStats) {
+      setStats(propStats);
+    }
+  }, [propStats]);
+
   const pages = entry?.pages?.length > 0 ? entry.pages : [entry?.content || ''];
 
   // Fetch journal stats when component opens
@@ -122,30 +129,8 @@ function PublishedJournalViewer({
   };
 
   const handleReaction = async (reactionType) => {
-    if (!user || !entry?.id) return;
-
-    try {
-      // ✅ Use cookies for authentication
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/journals/published/${entry.id}/react?type=${reactionType}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Reaction response:', data);
-        setStats(data);
-        if (onReact) {
-          onReact(reactionType, entry.id);
-        }
-      } else {
-        console.error('Failed to react:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Error handling reaction:', error);
+    if (onReact) {
+      onReact(reactionType, entry?.id);
     }
   };
 
@@ -295,10 +280,11 @@ function PublishedJournalViewer({
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return null;
+    if (profilePicture.startsWith('http')) return profilePicture;
     const filename = profilePicture.includes('/') 
       ? profilePicture.split('/').pop() 
       : profilePicture;
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${Date.now()}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${Date.now()}`;
   };
 
   const getInitials = (name) => {

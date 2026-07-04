@@ -292,96 +292,71 @@ function UserJournals() {
       <Box
         sx={{
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-            opacity: 0.3
-          }
+          position: 'relative'
         }}
       >
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
         <Fade in timeout={800}>
           <Box>
             {/* Modern Header Section */}
-            <Box textAlign="center" mb={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 5, flexWrap: 'wrap', gap: 2 }}>
+              <IconButton 
+                onClick={() => navigate(-1)} 
+                sx={{ 
+                  backgroundColor: 'white',
+                  color: '#667eea',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  '&:hover': {
+                    backgroundColor: '#f8fafc',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 15px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+              
               <Box
                 sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  mb: 3
+                  boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)',
                 }}
               >
-                <IconButton 
-                  onClick={() => navigate(-1)} 
-                  sx={{ 
-                    mr: 3,
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
-                    borderRadius: 2,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                    }
-                  }}
-                >
-                  <ArrowBackIcon />
-                </IconButton>
-                
-                <Box
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
-                    backdropFilter: 'blur(10px)',
-                    border: '2px solid rgba(255, 255, 255, 0.2)'
-                  }}
-                >
-                  <JournalIcon sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
+                <JournalIcon sx={{ fontSize: 28, color: 'white' }} />
               </Box>
               
-              <Typography 
-                variant="h3" 
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 700,
-                  color: 'white',
-                  textShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                  mb: 2
-                }}
-              >
-                {userName ? `${userName}'s Journals` : 'User Journals'}
-              </Typography>
-              
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  maxWidth: 600,
-                  margin: '0 auto',
-                  lineHeight: 1.6
-                }}
-              >
-                Explore the journal entries and discover shared thoughts and experiences
-              </Typography>
+              <Box sx={{ ml: 1 }}>
+                <Typography 
+                  variant="h3" 
+                  sx={{ 
+                    fontWeight: 800,
+                    color: '#2d3748',
+                    letterSpacing: '-0.5px',
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+                  }}
+                >
+                  {userName ? `${userName}'s Journals` : 'User Journals'}
+                </Typography>
+                
+                <Typography 
+                  variant="subtitle1" 
+                  sx={{ 
+                    color: '#718096',
+                    mt: 0.5,
+                    fontWeight: 500
+                  }}
+                >
+                  Explore the journal entries and discover shared thoughts and experiences
+                </Typography>
+              </Box>
             </Box>
 
             {/* Main Content Container */}
@@ -408,25 +383,48 @@ function UserJournals() {
               }}
             >
 
-        <Box sx={{ display: 'flex', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <form onSubmit={handleSearch} style={{ display: 'flex', flexGrow: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          mb: 5, 
+          flexWrap: 'wrap', 
+          gap: 3, 
+          p: 3, 
+          borderRadius: 4, 
+          bgcolor: '#f8fafc', 
+          border: '1px solid #e2e8f0',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
+        }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', flexGrow: 1, gap: '16px' }}>
             <TextField
               fullWidth
-              label="Search Journals"
+              placeholder="Search journals by title or content..."
               variant="outlined"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              sx={{ 
+                '& .MuiOutlinedInput-root': { 
+                  bgcolor: 'white', 
+                  borderRadius: 3,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                  },
+                  '&.Mui-focused': {
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
+                  }
+                } 
+              }}
               InputProps={{
                 endAdornment: search && (
                   <InputAdornment position="end">
-                    <IconButton onClick={handleClearSearch} edge="end">
-                      <ClearIcon />
+                    <IconButton onClick={handleClearSearch} edge="end" size="small">
+                      <ClearIcon fontSize="small" />
                     </IconButton>
                   </InputAdornment>
                 ),
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon color="action" />
                   </InputAdornment>
                 ),
               }}
@@ -434,23 +432,39 @@ function UserJournals() {
             <Button 
               type="submit" 
               variant="contained" 
-              sx={{ ml: 1 }}
               disabled={searchLoading}
+              sx={{ 
+                borderRadius: 3, 
+                px: 4,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #633f8a 100%)',
+                  boxShadow: '0 6px 20px rgba(102, 126, 234, 0.6)',
+                }
+              }}
             >
               Search
             </Button>
           </form>
 
-          <FormControl sx={{ minWidth: 120 }}>
-            <InputLabel id="mood-filter-label">Mood</InputLabel>
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel id="mood-filter-label">Filter by Mood</InputLabel>
             <Select
               labelId="mood-filter-label"
               value={filterMood}
-              label="Mood"
+              label="Filter by Mood"
               onChange={handleFilterChange}
+              sx={{ 
+                bgcolor: 'white', 
+                borderRadius: 3,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0,0,0,0.1)'
+                }
+              }}
               startAdornment={
-                <InputAdornment position="start">
-                  <FilterIcon />
+                <InputAdornment position="start" sx={{ ml: 1 }}>
+                  <FilterIcon color="action" />
                 </InputAdornment>
               }
             >
@@ -474,56 +488,96 @@ function UserJournals() {
         ) : (
           <Grid container spacing={3}>
             {entries.map((entry) => (
-              <Grid item xs={12} sm={6} md={4} key={entry.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={entry.id}>
                 <Card 
-                  elevation={3} 
+                  elevation={0} 
                   sx={{
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    position: 'relative'
+                    position: 'relative',
+                    borderRadius: 4,
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    background: 'linear-gradient(to bottom right, #ffffff, #fafafa)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    overflow: 'visible',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                      borderColor: 'transparent',
+                      '& .view-btn': {
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        color: '#667eea'
+                      }
+                    },
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                      borderRadius: '16px 16px 0 0'
+                    }
                   }}
                 >
-
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h5" component="h2" gutterBottom noWrap>
-                      {entry.title}
-                    </Typography>
+                  <CardContent sx={{ flexGrow: 1, p: 3 }}>
                     <Typography 
-                      variant="body2" 
-                      color="text.secondary" 
+                      variant="h5" 
+                      component="h2" 
+                      gutterBottom 
                       sx={{ 
+                        fontWeight: 700, 
+                        color: '#2d3748',
                         mb: 2,
                         display: '-webkit-box',
-                        WebkitLineClamp: 3,
+                        WebkitLineClamp: 1,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                       }}
                     >
+                      {entry.title}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        mb: 3,
+                        color: '#4a5568',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: 1.6
+                      }}
+                    >
                       {entry.content}
                     </Typography>
-                    <Divider sx={{ my: 1 }} />
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDate(entry.date)}
-                      </Typography>
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', color: '#718096' }}>
+                        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                          {formatDate(entry.date)}
+                        </Typography>
+                      </Box>
                       <Stack direction="row" spacing={1} alignItems="center">
                         {/* Privacy Indicator Chip */}
                         <Chip
                           icon={entry.isPrivate ? <LockIcon /> : <PublicIcon />}
                           label={entry.isPrivate ? 'Private' : 'Public'}
                           size="small"
-                          variant="outlined"
                           sx={{
-                            borderColor: entry.isPrivate ? '#f44336' : '#4caf50',
-                            color: entry.isPrivate ? '#f44336' : '#4caf50',
-                            bgcolor: entry.isPrivate ? 'rgba(244, 67, 54, 0.05)' : 'rgba(76, 175, 80, 0.05)',
+                            borderColor: entry.isPrivate ? 'rgba(244, 67, 54, 0.3)' : 'rgba(76, 175, 80, 0.3)',
+                            color: entry.isPrivate ? '#d32f2f' : '#2e7d32',
+                            bgcolor: entry.isPrivate ? 'rgba(244, 67, 54, 0.1)' : 'rgba(76, 175, 80, 0.1)',
                             fontWeight: 600,
                             fontSize: '0.7rem',
+                            border: '1px solid',
                             '& .MuiChip-icon': {
-                              color: entry.isPrivate ? '#f44336' : '#4caf50',
-                              fontSize: '12px'
+                              color: 'inherit',
+                              fontSize: '14px'
                             }
                           }}
                         />
@@ -533,28 +587,56 @@ function UserJournals() {
                             size="small" 
                             sx={{ 
                               bgcolor: getColorForMood(entry.mood),
-                              color: 'white'
+                              color: 'white',
+                              fontWeight: 600,
+                              fontSize: '0.7rem'
                             }} 
                           />
                         )}
                       </Stack>
                     </Box>
                     {entry.tags && entry.tags.trim() !== '' && (
-                      <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', gap: 0.5 }}>
+                      <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', gap: 1 }}>
                         {entry.tags.split(',').map((tag, index) => (
-                          <Chip key={index} label={tag.trim()} size="small" variant="outlined" />
+                          <Chip 
+                            key={index} 
+                            label={tag.trim()} 
+                            size="small" 
+                            sx={{
+                              bgcolor: 'rgba(0,0,0,0.04)',
+                              color: '#4a5568',
+                              fontWeight: 500,
+                              fontSize: '0.7rem',
+                              borderRadius: 2
+                            }} 
+                          />
                         ))}
                       </Stack>
                     )}
                   </CardContent>
-                  <CardActions>
+                  
+                  <Divider sx={{ borderColor: 'rgba(0,0,0,0.04)' }} />
+                  
+                  <CardActions sx={{ p: 2, pt: 1.5 }}>
                     <Button 
-                      size="small" 
+                      className="view-btn"
+                      size="medium" 
                       startIcon={<VisibilityIcon />}
                       onClick={() => handleViewEntry(entry.id)}
                       fullWidth
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          background: 'rgba(102, 126, 234, 0.1)',
+                          color: '#667eea'
+                        }
+                      }}
                     >
-                      View
+                      Read Full Entry
                     </Button>
                   </CardActions>
                 </Card>

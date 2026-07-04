@@ -100,8 +100,8 @@ function PublishedJournals() {
   );
 
   useEffect(() => {
+    fetchPublishedJournals();
     if (user) {
-      fetchPublishedJournals();
       fetchCurrentUser();
     }
   }, [user]);
@@ -181,8 +181,6 @@ function PublishedJournals() {
 
   // Separate search function for dynamic searching
   const performSearch = useCallback(async () => {
-    if (!user) return;
-    
     setSearchLoading(true);
     try {
       const params = {};
@@ -278,7 +276,11 @@ function PublishedJournals() {
 
   const handleReaction = async (reactionType, journalId = null) => {
     const targetJournalId = journalId || selectedJournal?.id;
-    if (!targetJournalId || !user) return;
+    if (!targetJournalId) return;
+    if (!user) {
+      setSnackbar({ open: true, message: 'Please sign in to react to journals', severity: 'info' });
+      return;
+    }
     
     console.log(`Toggling ${reactionType} for journal ${targetJournalId}`);
     
@@ -287,7 +289,7 @@ function PublishedJournals() {
       console.log('Reaction response:', response.data);
       
       // Update viewer stats if this is for the currently viewed journal
-      if (selectedJournal && targetJournalId === selectedJournal.id) {
+      if (viewingJournal && targetJournalId === viewingJournal.id) {
         setViewerStats(response.data);
       }
       
@@ -438,6 +440,7 @@ function PublishedJournals() {
 
   const getProfilePhotoUrl = (profilePicture) => {
     if (!profilePicture) return null;
+    if (profilePicture.startsWith('http')) return profilePicture;
     
     // Extract filename from the stored path
     const filename = profilePicture.includes('/') 
@@ -446,7 +449,7 @@ function PublishedJournals() {
     
     // Add cache busting timestamp
     const timestamp = Date.now();
-    return `${process.env.REACT_APP_BACKEND_URL || `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}`}/api/users/profile-photo/${filename}?t=${timestamp}`;
+    return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080'}/api/users/profile-photo/${filename}?t=${timestamp}`;
   };
 
   const handleProfileImageClick = (journal) => {
@@ -475,14 +478,19 @@ function PublishedJournals() {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <CircularProgress size={60} />
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      py: 4
+    }}>
+      <Container maxWidth="xl">
       {/* Enhanced Header Section */}
       <Fade in timeout={800}>
         <Paper 
@@ -738,7 +746,7 @@ function PublishedJournals() {
         <Fade in timeout={600}>
           <Grid container spacing={3}>
             {pagination.paginatedData.map((journal, index) => (
-              <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={journal.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={journal.id}>
                 <Fade in timeout={300 + index * 100}>
                   <Card 
                     elevation={2}
@@ -1333,7 +1341,8 @@ function PublishedJournals() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 
