@@ -21,7 +21,8 @@ import {
   Grid,
   Tabs,
   Tab,
-  CircularProgress
+  CircularProgress,
+  Collapse
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -44,7 +45,9 @@ import {
   Forum as ForumIcon,
   Article as ArticleIcon,
   NavigateBefore as NavigateBeforeIcon,
-  NavigateNext as NavigateNextIcon
+  NavigateNext as NavigateNextIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../context/AuthContext';
 import DiscussionSection from './DiscussionSection';
@@ -62,6 +65,7 @@ function PublishedJournalViewer({
 }) {
   const entry = journal; // For compatibility with existing code
   const { user } = useContext(AuthContext);
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [stats, setStats] = useState(propStats || {
     totalViews: 0,
@@ -323,66 +327,76 @@ function PublishedJournalViewer({
           zIndex: 10,
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          p: 3
+          p: 1.5
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                {entry.title}
-              </Typography>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar
-                  src={getProfilePhotoUrl(entry.userProfilePicture)}
-                  sx={{ 
-                    width: 32, 
-                    height: 32, 
-                    mr: 2,
-                    bgcolor: 'rgba(255,255,255,0.3)'
-                  }}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, mr: 1 }}>
+                  {entry.title}
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+                  sx={{ color: 'white', mb: 1 }}
                 >
-                  {getInitials(entry.userName)}
-                </Avatar>
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    {entry.userName || 'Anonymous'}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8, fontSize: '0.875rem' }}>
-                    {entry.userEmail || 'No email available'}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    {formatDate(entry.date)}
-                  </Typography>
-                </Box>
+                  {isHeaderExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
               </Box>
+              
+              <Collapse in={isHeaderExpanded}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                  <Avatar
+                    src={getProfilePhotoUrl(entry.userProfilePicture)}
+                    sx={{ 
+                      width: 48, 
+                      height: 48, 
+                      mr: 2,
+                      bgcolor: 'rgba(255,255,255,0.3)'
+                    }}
+                  >
+                    {getInitials(entry.userName)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {entry.userName || 'Anonymous'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.8, fontSize: '0.875rem' }}>
+                      {entry.userEmail || 'No email available'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                      {formatDate(entry.date)}
+                    </Typography>
+                  </Box>
+                </Box>
 
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                <Chip
-                  icon={<MoodIcon />}
-                  label={`Mood: ${entry.mood || 'Not specified'}`}
-                  size="medium"
-                  sx={{
-                    bgcolor: getMoodColor(entry.mood),
-                    color: 'white',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    px: 1
-                  }}
-                />
-                {entry.tags && entry.tags.split(',').map((tag, index) => (
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
                   <Chip
-                    key={index}
-                    icon={<TagIcon />}
-                    label={tag.trim()}
+                    icon={<MoodIcon />}
+                    label={`Mood: ${entry.mood || 'Not specified'}`}
                     size="small"
                     sx={{
-                      bgcolor: 'rgba(255,255,255,0.2)',
+                      bgcolor: getMoodColor(entry.mood),
                       color: 'white',
-                      fontWeight: 500
+                      fontWeight: 600,
+                      px: 1
                     }}
                   />
-                ))}
-              </Stack>
+                  {entry.tags && entry.tags.split(',').map((tag, index) => (
+                    <Chip
+                      key={index}
+                      icon={<TagIcon />}
+                      label={tag.trim()}
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        color: 'white',
+                        fontWeight: 500
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Collapse>
             </Box>
             
             <IconButton

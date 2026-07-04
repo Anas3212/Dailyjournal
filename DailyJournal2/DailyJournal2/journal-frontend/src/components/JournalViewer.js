@@ -18,7 +18,8 @@ import {
   Zoom,
   Card,
   CardContent,
-  Grid
+  Grid,
+  Collapse
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -40,17 +41,21 @@ import {
   ThumbUpAlt as ThumbUpIcon,
   ThumbDownAlt as ThumbDownIcon,
   NavigateBefore as NavigateBeforeIcon,
-  NavigateNext as NavigateNextIcon
+  NavigateNext as NavigateNextIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { getFileType as getFileTypeUtil, extractFilename } from '../utils/fileUtils';
 import { downloadFile } from '../utils/fileDownload';
 
 function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, stats, onReact }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
 
   // Reset page when entry changes
   useEffect(() => {
     setCurrentPageIndex(0);
+    setIsHeaderExpanded(false); // Reset expansion state when entry changes
   }, [entry?.id]);
 
   if (!entry) return null;
@@ -285,27 +290,42 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
           </IconButton>
 
           {/* Title and metadata */}
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+          <Box sx={{ position: 'relative', zIndex: 1, pr: { xs: 4, sm: 6 } }}>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
               <Avatar
                 sx={{
                   bgcolor: 'rgba(255,255,255,0.2)',
-                  width: 60,
-                  height: 60,
+                  width: 48,
+                  height: 48,
                   backdropFilter: 'blur(10px)'
                 }}
               >
-                <BookIcon sx={{ fontSize: 30 }} />
+                <BookIcon sx={{ fontSize: 24 }} />
               </Avatar>
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: 800, mb: 1, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                   {entry.title}
                 </Typography>
-                <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 400 }}>
+                <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 400 }}>
                   A Personal Journal Entry
                 </Typography>
               </Box>
+              <IconButton
+                onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+                sx={{
+                  color: 'white',
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.3)',
+                  }
+                }}
+              >
+                {isHeaderExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
             </Stack>
+
+            <Collapse in={isHeaderExpanded} timeout="auto" unmountOnExit>
 
             <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} md={6}>
@@ -353,7 +373,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                     <Chip
                       key={tag}
                       label={`#${tag}`}
-                      size="medium"
+                      size="small"
                       sx={{
                         bgcolor: 'rgba(255,255,255,0.2)',
                         color: 'white',
@@ -370,6 +390,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                 </Stack>
               </Box>
             )}
+            </Collapse>
           </Box>
         </Box>
 
@@ -381,10 +402,10 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
               <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 Your Thoughts & Reflections
               </Typography>
-              
+
               {pages.length > 1 && (
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <IconButton 
+                  <IconButton
                     onClick={() => setCurrentPageIndex(p => Math.max(0, p - 1))}
                     disabled={currentPageIndex === 0}
                     size="small"
@@ -394,7 +415,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Page {currentPageIndex + 1} / {pages.length}
                   </Typography>
-                  <IconButton 
+                  <IconButton
                     onClick={() => setCurrentPageIndex(p => Math.min(pages.length - 1, p + 1))}
                     disabled={currentPageIndex === pages.length - 1}
                     size="small"
@@ -404,7 +425,7 @@ function JournalViewer({ open, onClose, entry, onDeleteFile, onOpenFileViewer, s
                 </Stack>
               )}
             </Box>
-            
+
             <Typography
               variant="body1"
               sx={{
