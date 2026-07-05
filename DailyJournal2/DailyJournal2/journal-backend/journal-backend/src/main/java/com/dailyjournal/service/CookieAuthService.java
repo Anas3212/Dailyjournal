@@ -94,7 +94,7 @@ public class CookieAuthService {
     public Map<String, Object> login(AuthRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
         // Check if user exists and is enabled
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Invalid credentials"));
 
         if (!user.isEnabled()) {
             throw new DisabledException("User is blocked");
