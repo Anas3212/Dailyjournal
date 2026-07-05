@@ -62,7 +62,9 @@ public class SecurityConfig {
                                                                 "/api/reports/reasons",
                                                                 "/api/journals/published",
                                                                 "/api/journals/published/**",
-                                                                "/api/discussions/journal/**")
+                                                                "/api/discussions/journal/**",
+                                                                "/actuator/health",
+                                                                "/actuator/info")
                                                 .permitAll()
                                                 // Media endpoints - allow both authenticated and unauthenticated access
                                                 .requestMatchers("/api/journals/media/**").permitAll()

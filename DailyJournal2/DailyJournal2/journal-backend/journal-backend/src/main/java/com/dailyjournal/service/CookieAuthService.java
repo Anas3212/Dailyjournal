@@ -148,37 +148,37 @@ public class CookieAuthService {
         Optional<String> refreshTokenOpt = cookieJWTService.extractRefreshTokenFromCookies(request);
         
         if (refreshTokenOpt.isEmpty()) {
-            throw new RuntimeException("Refresh token not found");
+            throw new com.dailyjournal.exception.UnauthorizedException("Refresh token not found");
         }
 
         String refreshToken = refreshTokenOpt.get();
 
         // Validate refresh token
         if (!cookieJWTService.isRefreshToken(refreshToken)) {
-            throw new RuntimeException("Invalid refresh token type");
+            throw new com.dailyjournal.exception.UnauthorizedException("Invalid refresh token type");
         }
 
         String userEmail = cookieJWTService.extractUsername(refreshToken);
         if (userEmail == null) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new com.dailyjournal.exception.UnauthorizedException("Invalid refresh token");
         }
 
         // Get user and validate
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new com.dailyjournal.exception.UnauthorizedException("User not found"));
 
         if (!user.isEnabled()) {
             throw new DisabledException("User is blocked");
         }
 
         if (!cookieJWTService.isTokenValid(refreshToken, user.getEmail())) {
-            throw new RuntimeException("Refresh token expired or invalid");
+            throw new com.dailyjournal.exception.UnauthorizedException("Refresh token expired or invalid");
         }
 
         // --- NEW: Session validation ---
         Optional<String> sessionIdOpt = sessionService.extractSessionId(request);
         if (sessionIdOpt.isEmpty()) {
-            throw new RuntimeException("Session required for token refresh");
+            throw new com.dailyjournal.exception.UnauthorizedException("Session required for token refresh");
         }
         
         String sessionId = sessionIdOpt.get();
@@ -187,7 +187,7 @@ public class CookieAuthService {
         if (sessionOpt.isEmpty()) {
             cookieJWTService.clearAuthCookies(response);
             sessionService.clearSessionCookie(response);
-            throw new RuntimeException("Session expired or revoked");
+            throw new com.dailyjournal.exception.UnauthorizedException("Session expired or revoked");
         }
         // --- END NEW ---
 
