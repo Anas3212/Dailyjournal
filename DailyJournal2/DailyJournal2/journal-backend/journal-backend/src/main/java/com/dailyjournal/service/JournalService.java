@@ -62,9 +62,11 @@ public class JournalService {
     // May return null if no authenticated principal
     private User getCurrentUserIfAny() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return null;
+        if (auth == null)
+            return null;
         Object principal = auth.getPrincipal();
-        if (principal instanceof User user) return user;
+        if (principal instanceof User user)
+            return user;
         return null;
     }
 
@@ -83,23 +85,24 @@ public class JournalService {
      * Check if a user has access to a team through connected teams
      */
     private boolean hasConnectedTeamAccess(Long userId, Long targetTeamId) {
-        if (targetTeamId == null) return false;
-        
+        if (targetTeamId == null)
+            return false;
+
         // Get all teams where the user is a member
         List<com.dailyjournal.entity.TeamMember> userMemberships = teamMemberRepository.findByUserId(userId);
-        
+
         for (com.dailyjournal.entity.TeamMember membership : userMemberships) {
             Long userTeamId = membership.getTeam().getId();
-            
+
             // Check if user's team is connected to the target team
             Optional<TeamConnection> connection = teamConnectionRepository
                     .findConnectionBetweenTeams(userTeamId, targetTeamId);
-            
+
             if (connection.isPresent() && connection.get().getStatus() == TeamConnectionStatus.ACCEPTED) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -107,13 +110,14 @@ public class JournalService {
      * Enhanced team access check that includes connected teams
      */
     private boolean hasTeamAccess(Long teamId, Long userId) {
-        if (teamId == null) return false;
-        
+        if (teamId == null)
+            return false;
+
         // Check direct membership first
         if (teamMemberRepository.isUserInTeam(teamId, userId)) {
             return true;
         }
-        
+
         // Check connected team access
         return hasConnectedTeamAccess(userId, teamId);
     }
@@ -123,7 +127,7 @@ public class JournalService {
         boolean isAdmin = currentUser.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
         Long teamId = entry.getTeam() != null ? entry.getTeam().getId() : null;
         boolean inTeam = hasTeamAccess(teamId, currentUser.getId());
-        
+
         // NEW: Check if user is assigned as journal editor for this specific journal
         boolean isJournalEditor = false;
         if (entry.getTeam() != null) {
@@ -131,7 +135,7 @@ public class JournalService {
                     .findActiveEditorByJournalAndUser(entry.getId(), currentUser.getId())
                     .isPresent();
         }
-        
+
         if (!(isOwner || isAdmin || inTeam || isJournalEditor)) {
             throw new ForbiddenException("Not authorized to access this resource");
         }
@@ -140,7 +144,8 @@ public class JournalService {
     /**
      * Check media management permissions with fallback logic:
      * - Personal journals: Owner can manage media freely
-     * - Team journals: Assigned admin editors and team masters have priority, regular admins as fallback
+     * - Team journals: Assigned admin editors and team masters have priority,
+     * regular admins as fallback
      */
     private void checkAdminEditorOrMasterOnly(User currentUser, JournalEntry entry) {
         // Personal journals: Allow owner to manage media without restrictions
@@ -150,24 +155,24 @@ public class JournalService {
             }
             return; // Owner of personal journal can manage media
         }
-        
+
         // Check if user is app admin (ROLE_ADMIN)
         boolean isAppAdmin = currentUser.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        
+
         System.out.println("=== MEDIA PERMISSION DEBUG ===");
         System.out.println("User ID: " + currentUser.getId() + ", Email: " + currentUser.getEmail());
         System.out.println("Journal ID: " + entry.getId() + ", Team ID: " + entry.getTeam().getId());
         System.out.println("Is app admin: " + isAppAdmin);
-        
+
         // App admins always have access
         if (isAppAdmin) {
             System.out.println("ACCESS GRANTED: User is app admin");
             System.out.println("=== END DEBUG ===");
             return;
         }
-        
+
         boolean isAssignedEditor = false;
-        
+
         // Check editor assignment for any user (team admin can be assigned as editor)
         Optional<JournalEditor> editorAssignment = journalEditorRepository
                 .findActiveEditorByJournalAndUser(entry.getId(), currentUser.getId());
@@ -176,7 +181,7 @@ public class JournalService {
         if (isAssignedEditor) {
             System.out.println("Editor assignment ID: " + editorAssignment.get().getId());
         }
-        
+
         // Check if user is team admin or master
         Optional<com.dailyjournal.entity.TeamMember> teamMember = teamMemberRepository
                 .findByTeamIdAndUserId(entry.getTeam().getId(), currentUser.getId());
@@ -186,7 +191,7 @@ public class JournalService {
         boolean isTeamMaster = teamMember
                 .map(member -> member.getRole() == com.dailyjournal.entity.TeamMember.Role.MASTER)
                 .orElse(false);
-        
+
         System.out.println("Team member found: " + teamMember.isPresent());
         if (teamMember.isPresent()) {
             com.dailyjournal.entity.TeamMember.Role role = teamMember.get().getRole();
@@ -194,26 +199,26 @@ public class JournalService {
         }
         System.out.println("Is team admin: " + isTeamAdmin);
         System.out.println("Is team master: " + isTeamMaster);
-        
+
         // Team masters always have access regardless of editor assignments
         if (isTeamMaster) {
             System.out.println("ACCESS GRANTED: User is team master");
             System.out.println("=== END DEBUG ===");
             return;
         }
-        
+
         // Allow if user is assigned editor
         if (isAssignedEditor) {
             System.out.println("ACCESS GRANTED: User is assigned admin editor");
             System.out.println("=== END DEBUG ===");
             return;
         }
-        
+
         // Fallback: Allow team admins if no editor is assigned to this journal
         if (isTeamAdmin) {
             List<JournalEditor> allEditors = journalEditorRepository.findActiveEditorsByJournalId(entry.getId());
             System.out.println("Total active editors for journal: " + allEditors.size());
-            
+
             // If no editors are assigned at all, allow team admins
             if (allEditors.isEmpty()) {
                 System.out.println("ACCESS GRANTED: Team admin fallback (no editors assigned)");
@@ -221,12 +226,12 @@ public class JournalService {
                 return; // Allow team admin when no editors are assigned
             }
         }
-        
+
         System.out.println("ACCESS DENIED: No valid permission found");
         System.out.println("=== END DEBUG ===");
-        throw new ForbiddenException("Only app admins, assigned editors, team masters, or team admins (when no editor assigned) can manage media files");
+        throw new ForbiddenException(
+                "Only app admins, assigned editors, team masters, or team admins (when no editor assigned) can manage media files");
     }
-
 
     public JournalEntry create(Long userId, JournalRequest req) {
         User currentUser = getCurrentUser();
@@ -237,7 +242,7 @@ public class JournalService {
 
         JournalEntry entry = new JournalEntry();
         entry.setTitle(req.getTitle());
-        
+
         if (req.getPages() != null && !req.getPages().isEmpty()) {
             // Validation
             if (req.getPages().size() > 10) {
@@ -248,7 +253,8 @@ public class JournalService {
                     throw new com.dailyjournal.exception.BadRequestException("Page content cannot be empty.");
                 }
                 if (page.length() > 5000) {
-                    throw new com.dailyjournal.exception.BadRequestException("A single page cannot exceed 5000 characters.");
+                    throw new com.dailyjournal.exception.BadRequestException(
+                            "A single page cannot exceed 5000 characters.");
                 }
             }
             entry.setPages(req.getPages());
@@ -290,41 +296,43 @@ public class JournalService {
     public JournalEntry getById(Long id) {
         JournalEntry entry = journalRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Journal not found"));
-        
+
         User currentUser = getCurrentUser();
         User journalOwner = entry.getUser();
-        
+
         // Allow access if:
         // 1. User is the owner of the journal
         // 2. User is an admin
         // 3. Journal is public (not private)
-        // 4. For private journals: only direct team members (not connected team members)
+        // 4. For private journals: only direct team members (not connected team
+        // members)
         boolean isOwner = currentUser.getId().equals(journalOwner.getId());
         boolean isAdmin = currentUser.getRoles().stream()
                 .anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
         boolean isPublic = !entry.isPrivate();
         Long teamId = entry.getTeam() != null ? entry.getTeam().getId() : null;
-        
+
         // For private journals, only allow direct team membership
         boolean hasDirectTeamAccess = isTeamMember(teamId, currentUser.getId());
-        
+
         if (!isOwner && !isAdmin && !isPublic && !hasDirectTeamAccess) {
             throw new ForbiddenException("Not authorized to access this private journal");
         }
-        
+
         return entry;
     }
 
     public JournalEntry update(Long id, JournalRequest req) {
         JournalEntry entry = journalRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Journal not found"));
-        
+
         User currentUser = getCurrentUser();
-        
-        // Enhanced permission check - allow owner, admin, or assigned journal editor to edit
+
+        // Enhanced permission check - allow owner, admin, or assigned journal editor to
+        // edit
         boolean isOwner = currentUser.getId().equals(entry.getUser().getId());
         boolean isAdmin = currentUser.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        
+
         // NEW: Check if user is assigned as journal editor for this specific journal
         boolean isJournalEditor = false;
         if (entry.getTeam() != null) {
@@ -332,14 +340,13 @@ public class JournalService {
                     .findActiveEditorByJournalAndUser(entry.getId(), currentUser.getId())
                     .isPresent();
         }
-        
+
         if (!isOwner && !isAdmin && !isJournalEditor) {
             throw new ForbiddenException("Insufficient permissions to edit this journal");
         }
-        
 
         entry.setTitle(req.getTitle());
-        
+
         if (req.getPages() != null && !req.getPages().isEmpty()) {
             // Validation
             if (req.getPages().size() > 10) {
@@ -350,7 +357,8 @@ public class JournalService {
                     throw new com.dailyjournal.exception.BadRequestException("Page content cannot be empty.");
                 }
                 if (page.length() > 5000) {
-                    throw new com.dailyjournal.exception.BadRequestException("A single page cannot exceed 5000 characters.");
+                    throw new com.dailyjournal.exception.BadRequestException(
+                            "A single page cannot exceed 5000 characters.");
                 }
             }
             entry.setPages(req.getPages());
@@ -364,7 +372,7 @@ public class JournalService {
         entry.setTags(req.getTags());
         entry.setDate(req.getDate());
         entry.setPrivate(req.isPrivate());
-        
+
         // Only update media paths if explicitly provided in the request
         // This prevents accidental clearing of existing media files
         if (req.getMediaPaths() != null) {
@@ -376,7 +384,7 @@ public class JournalService {
         if (req.getTeamId() != null) {
             Team team = teamRepository.findById(req.getTeamId())
                     .orElseThrow(() -> new NotFoundException("Team not found"));
-            
+
             // Check if user is a member of the target team
             if (!hasTeamAccess(team.getId(), currentUser.getId())) {
                 throw new ForbiddenException("You must be a team member to assign a journal to this team");
@@ -400,11 +408,16 @@ public class JournalService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
         checkOwnershipOrAdmin(currentUser, user);
 
-        if (mood != null) return journalRepo.findByUserIdAndMoodContainingIgnoreCase(userId, mood);
-        if (tag != null) return journalRepo.findByUserIdAndTagsContainingIgnoreCase(userId, tag);
-        if (date != null) return journalRepo.findByUserIdAndDate(userId, date);
-        if ("asc".equalsIgnoreCase(sort)) return journalRepo.findByUserIdOrderByDateAsc(userId);
-        if ("desc".equalsIgnoreCase(sort)) return journalRepo.findByUserIdOrderByDateDesc(userId);
+        if (mood != null)
+            return journalRepo.findByUserIdAndMoodContainingIgnoreCase(userId, mood);
+        if (tag != null)
+            return journalRepo.findByUserIdAndTagsContainingIgnoreCase(userId, tag);
+        if (date != null)
+            return journalRepo.findByUserIdAndDate(userId, date);
+        if ("asc".equalsIgnoreCase(sort))
+            return journalRepo.findByUserIdOrderByDateAsc(userId);
+        if ("desc".equalsIgnoreCase(sort))
+            return journalRepo.findByUserIdOrderByDateDesc(userId);
 
         return journalRepo.findByUserId(userId);
     }
@@ -426,22 +439,25 @@ public class JournalService {
 
         long totalSize = 0L;
         long maxTotalSize = 10 * 1024 * 1024; // 10 MB
-        long maxFileSize = 3 * 1024 * 1024;   // 3 MB
+        long maxFileSize = 3 * 1024 * 1024; // 3 MB
         int maxAllowedFiles = 4;
 
         List<String> existingPaths = entry.getMediaPaths() != null ? entry.getMediaPaths() : new ArrayList<>();
         if ((existingPaths.size() + files.length) > maxAllowedFiles) {
-            throw new BadRequestException("Upload limit reached. Only " + maxAllowedFiles + " files allowed per journal.");
+            throw new BadRequestException(
+                    "Upload limit reached. Only " + maxAllowedFiles + " files allowed per journal.");
         }
 
         List<String> allowedExtensions = List.of("jpg", "jpeg", "png", "gif", "pdf", "mp3", "wav", "ogg");
 
         try {
             for (MultipartFile file : files) {
-                if (file.isEmpty()) continue;
+                if (file.isEmpty())
+                    continue;
 
                 String originalFilename = file.getOriginalFilename();
-                if (originalFilename == null) throw new BadRequestException("Invalid file name");
+                if (originalFilename == null)
+                    throw new BadRequestException("Invalid file name");
 
                 String extension = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
                 if (!allowedExtensions.contains(extension)) {
@@ -485,7 +501,7 @@ public class JournalService {
 
         // Normalize the requested fileIdentifier
         String targetFilename = extractFilename(fileIdentifier);
-        
+
         String matchedPath = null;
         for (String storedPath : mediaPaths) {
             if (extractFilename(storedPath).equals(targetFilename)) {
@@ -507,7 +523,8 @@ public class JournalService {
     }
 
     private String extractFilename(String identifier) {
-        if (identifier == null) return "";
+        if (identifier == null)
+            return "";
         try {
             String decoded = URLDecoder.decode(identifier, StandardCharsets.UTF_8.name());
             String noQuery = decoded.split("\\?")[0];
@@ -519,13 +536,14 @@ public class JournalService {
     }
 
     // ===== PUBLIC JOURNAL METHODS =====
-    // These methods return only public (non-private) journals for user search and viewing
-    
+    // These methods return only public (non-private) journals for user search and
+    // viewing
+
     public List<JournalEntry> getPublicJournalsByUser(Long userId) {
         // No ownership check needed - anyone can view public journals
         return journalRepo.findByUserIdAndIsPrivateFalse(userId);
     }
-    
+
     public List<JournalEntry> searchPublicJournals(Long userId, String mood, String tag, LocalDate date, String sort) {
         // No ownership check needed - anyone can search public journals
         if ("asc".equalsIgnoreCase(sort)) {
@@ -536,53 +554,53 @@ public class JournalService {
         }
         return journalRepo.findByUserIdAndIsPrivateFalse(userId);
     }
-    
+
     public List<JournalEntry> getPublicJournalsByDateRange(Long userId, LocalDate start, LocalDate end) {
         // No ownership check needed - anyone can view public journals by date range
         return journalRepo.findByUserIdAndIsPrivateFalseAndDateBetween(userId, start, end);
     }
-    
+
     // ===== PUBLISHED JOURNAL METHODS =====
     // These methods handle published journals that any user can view
-    
+
     public List<JournalEntry> getAllPublishedJournals() {
         // No ownership check needed - anyone can view published journals
         return journalRepo.findByIsPublishedTrueOrderByDateDesc();
     }
-    
+
     public List<JournalEntry> searchPublishedJournals(String search, String mood, String tags, LocalDate date) {
         // No ownership check needed - anyone can search published journals
         return journalRepo.searchPublishedJournals(search, mood, tags, date);
     }
-    
+
     public JournalEntry publishJournal(Long journalId) {
         User currentUser = getCurrentUser();
         JournalEntry journal = journalRepo.findById(journalId)
                 .orElseThrow(() -> new NotFoundException("Journal not found"));
-        
+
         // Check ownership - only owner can publish their journal
         checkOwnershipOrAdmin(currentUser, journal.getUser());
-        
+
         journal.setPublished(true);
         journal.setEverPublished(true); // Mark as ever published for admin view
         return journalRepo.save(journal);
     }
-    
+
     public JournalEntry unpublishJournal(Long journalId) {
         User currentUser = getCurrentUser();
         JournalEntry journal = journalRepo.findById(journalId)
                 .orElseThrow(() -> new NotFoundException("Journal not found"));
-        
+
         // Check ownership - only owner can unpublish their journal (not admin action)
         if (!journal.getUser().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("Access denied. You can only unpublish your own journals.");
         }
-        
+
         journal.setPublished(false);
         journal.setHiddenByAdmin(false); // When user unpublishes, it's not hidden by admin
         return journalRepo.save(journal);
     }
-    
+
     public JournalEntry hideJournalByAdmin(Long journalId) {
         User currentUser = getCurrentUser();
         // Only admins can hide journals
@@ -591,16 +609,17 @@ public class JournalService {
         if (!isAdmin) {
             throw new ForbiddenException("Access denied. Admin role required.");
         }
-        
+
         JournalEntry journal = journalRepo.findById(journalId)
                 .orElseThrow(() -> new RuntimeException("Journal not found with ID: " + journalId));
-        
+
         journal.setPublished(false);
         journal.setHiddenByAdmin(true); // Mark as hidden by admin
         return journalRepo.save(journal);
     }
-    
-    // Admin methods to get all journals that were ever published (including hidden ones)
+
+    // Admin methods to get all journals that were ever published (including hidden
+    // ones)
     public List<JournalEntry> getAllEverPublishedJournalsForAdmin() {
         User currentUser = getCurrentUser();
         // Only admins can access this
@@ -611,8 +630,9 @@ public class JournalService {
         }
         return journalRepo.findAllEverPublishedJournalsForAdmin();
     }
-    
-    public List<JournalEntry> searchAllEverPublishedJournalsForAdmin(String search, String mood, String tags, LocalDate date) {
+
+    public List<JournalEntry> searchAllEverPublishedJournalsForAdmin(String search, String mood, String tags,
+            LocalDate date) {
         User currentUser = getCurrentUser();
         // Only admins can access this
         boolean isAdmin = currentUser.getRoles().stream()
@@ -622,7 +642,7 @@ public class JournalService {
         }
         return journalRepo.searchAllEverPublishedJournalsForAdmin(search, mood, tags, date);
     }
-    
+
     // Admin method to restore/unhide a journal (set it back to published)
     public JournalEntry restoreJournal(Long journalId) {
         User currentUser = getCurrentUser();
@@ -632,15 +652,15 @@ public class JournalService {
         if (!isAdmin) {
             throw new RuntimeException("Access denied. Admin role required.");
         }
-        
+
         JournalEntry journal = journalRepo.findById(journalId)
                 .orElseThrow(() -> new RuntimeException("Journal not found with ID: " + journalId));
-        
+
         // Only restore journals that were ever published
         if (!journal.isEverPublished()) {
             throw new BadRequestException("Cannot restore journal that was never published");
         }
-        
+
         journal.setPublished(true);
         journal.setHiddenByAdmin(false); // Clear admin hide flag when restoring
         return journalRepo.save(journal);
@@ -658,14 +678,15 @@ public class JournalService {
             User currentUser = getCurrentUserIfAny();
             boolean isPublic = !entry.isPrivate();
             boolean isPublished = entry.isPublished() && !entry.isHiddenByAdmin();
-            
+
             // Published journals are accessible to everyone
             if (isPublished) {
                 return entry;
             }
-            
+
             if (currentUser == null) {
-                if (!isPublic) throw new ForbiddenException("Not authorized to access this media");
+                if (!isPublic)
+                    throw new ForbiddenException("Not authorized to access this media");
                 return entry;
             }
 
@@ -701,7 +722,8 @@ public class JournalService {
         User currentUser = getCurrentUserIfAny();
         if (currentUser != null) {
             java.time.LocalDate today = java.time.LocalDate.now();
-            boolean exists = journalViewRepository.existsByJournal_IdAndUser_IdAndViewDate(journal.getId(), currentUser.getId(), today);
+            boolean exists = journalViewRepository.existsByJournal_IdAndUser_IdAndViewDate(journal.getId(),
+                    currentUser.getId(), today);
             if (!exists) {
                 JournalView view = new JournalView();
                 view.setJournal(journal);
@@ -718,7 +740,8 @@ public class JournalService {
         JournalEntry journal = ensurePublishedVisible(journalId);
         User currentUser = getCurrentUser();
 
-        java.util.Optional<JournalReaction> existing = journalReactionRepository.findByJournal_IdAndUser_Id(journal.getId(), currentUser.getId());
+        java.util.Optional<JournalReaction> existing = journalReactionRepository
+                .findByJournal_IdAndUser_Id(journal.getId(), currentUser.getId());
         if (existing.isPresent()) {
             JournalReaction r = existing.get();
             if (r.getType() == type) {
@@ -755,38 +778,40 @@ public class JournalService {
         if (currentUser != null) {
             userReaction = journalReactionRepository.findUserReaction(journal.getId(), currentUser.getId());
         }
-        return new PublishedStatsResponse(journal.getId(), totalViews, uniqueViewers, likes, dislikes, hearts, userReaction);
+        return new PublishedStatsResponse(journal.getId(), totalViews, uniqueViewers, likes, dislikes, hearts,
+                userReaction);
     }
 
     public Map<Long, PublishedStatsResponse> getBatchPublishedStats(List<Long> journalIds) {
         User currentUser = getCurrentUserIfAny();
         Map<Long, PublishedStatsResponse> statsMap = new HashMap<>();
-        
+
         for (Long journalId : journalIds) {
             try {
                 JournalEntry journal = journalRepo.findById(journalId).orElse(null);
                 if (journal == null || !journal.isPublished() || journal.isHiddenByAdmin()) {
                     continue;
                 }
-                
+
                 long totalViews = journalViewRepository.countByJournal_Id(journalId);
                 long uniqueViewers = journalViewRepository.countUniqueUsers(journalId);
                 long likes = journalReactionRepository.countByJournal_IdAndType(journalId, ReactionType.LIKE);
                 long dislikes = journalReactionRepository.countByJournal_IdAndType(journalId, ReactionType.DISLIKE);
                 long hearts = journalReactionRepository.countByJournal_IdAndType(journalId, ReactionType.HEART);
-                
+
                 ReactionType userReaction = null;
                 if (currentUser != null) {
                     userReaction = journalReactionRepository.findUserReaction(journalId, currentUser.getId());
                 }
-                
-                statsMap.put(journalId, new PublishedStatsResponse(journalId, totalViews, uniqueViewers, likes, dislikes, hearts, userReaction));
+
+                statsMap.put(journalId, new PublishedStatsResponse(journalId, totalViews, uniqueViewers, likes,
+                        dislikes, hearts, userReaction));
             } catch (Exception e) {
                 // Skip journals that cause errors
                 continue;
             }
         }
-        
+
         return statsMap;
     }
 }

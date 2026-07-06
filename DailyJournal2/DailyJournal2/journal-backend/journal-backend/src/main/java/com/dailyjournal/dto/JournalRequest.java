@@ -19,7 +19,7 @@ public class JournalRequest {
     private String mood; // optional
 
     private String tags; // comma-separated (optional)
-    
+
     @JsonProperty("isPrivate")
     private boolean isPrivate = false; // Default to public
 
@@ -32,6 +32,5 @@ public class JournalRequest {
 
     // Optional: link this journal to a team the user belongs to
     private Long teamId;
-
 
 }
