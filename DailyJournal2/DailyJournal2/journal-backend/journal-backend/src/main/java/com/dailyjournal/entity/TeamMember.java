@@ -28,7 +28,7 @@ public class TeamMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, columnDefinition = "varchar(10)")
     @Builder.Default
     private Role role = Role.MEMBER;
 
