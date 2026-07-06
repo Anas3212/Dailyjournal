@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -79,9 +79,9 @@ const Workshop = () => {
     loadFiles();
     loadStats();
     loadFileTypes();
-  }, [page, searchTerm, selectedFileType, selectedCategory]);
+  }, [loadFiles, loadStats, loadFileTypes]);
 
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -101,25 +101,25 @@ const Workshop = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm, selectedFileType, selectedCategory]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await getWorkshopStats();
       setStats(response.data);
     } catch (error) {
       console.error('Error loading stats:', error);
     }
-  };
+  }, []);
 
-  const loadFileTypes = async () => {
+  const loadFileTypes = useCallback(async () => {
     try {
       const response = await getFileTypes();
       setFileTypes(response.data);
     } catch (error) {
       console.error('Error loading file types:', error);
     }
-  };
+  }, []);
 
   const handleCreateFile = async (fileData) => {
     try {

@@ -113,6 +113,7 @@ export default function Teams() {
   };
 
   // Load on mount and again when user is resolved (so role/isOwner derive correctly)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [user?.id]);
 
   // Debounced search for friends' master teams (single query used for both team and friend filters)

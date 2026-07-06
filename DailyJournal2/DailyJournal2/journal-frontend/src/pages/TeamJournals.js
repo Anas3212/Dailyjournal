@@ -204,6 +204,7 @@ export default function TeamJournals() {
       controller.abort();
       created.forEach(u => URL.revokeObjectURL(u));
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journals]);
 
   const handleCreate = async (data) => {

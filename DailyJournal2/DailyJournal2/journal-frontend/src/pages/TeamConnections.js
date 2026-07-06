@@ -252,6 +252,7 @@ export default function TeamConnections() {
     if (teamId) {
       loadData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId]);
 
   // Handle navigation state for pre-filled target team
@@ -263,7 +264,7 @@ export default function TeamConnections() {
       // Clear the state to prevent re-opening on refresh
       navigate(location.pathname, { replace: true, state: null });
     }
-  }, [location.state, navigate, requestDialogOpen]);
+  }, [location.state, navigate, requestDialogOpen, location.pathname]);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });

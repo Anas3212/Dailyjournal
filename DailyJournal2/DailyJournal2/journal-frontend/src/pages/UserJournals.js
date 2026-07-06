@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -83,18 +83,18 @@ function UserJournals() {
     if (!user) return;
     fetchCurrentUser();
     fetchJournals();
-  }, [user, userId]);
+  }, [user, userId, fetchCurrentUser, fetchJournals]);
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     try {
       const userRes = await getCurrentUser();
       setCurrentUser(userRes.data);
     } catch (error) {
       console.error('Error fetching current user:', error);
     }
-  };
+  }, []);
 
-  const fetchJournals = async () => {
+  const fetchJournals = useCallback(async () => {
     setLoading(true);
     try {
       // Use public journals endpoint to show only public journals when viewing other users
@@ -110,7 +110,7 @@ function UserJournals() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, userId]);
 
   const handleSearch = async (e) => {
     e.preventDefault();

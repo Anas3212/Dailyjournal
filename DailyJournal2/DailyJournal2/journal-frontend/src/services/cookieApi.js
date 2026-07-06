@@ -14,35 +14,78 @@ const cookieApi = axios.create({
   },
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Response interceptor to handle token refresh automatically
 cookieApi.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     
+    // Check if the request is already a refresh request to prevent infinite loops
+    const isRefreshRequest = originalRequest?.url?.includes('/auth/cookie/refresh');
+    
     // Only retry on 401 (Unauthorized / token expired) — NOT 403 (Forbidden = permission denied)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Try to refresh the token
-        await cookieApi.post('/auth/cookie/refresh');
-        
-        // Retry the original request
-        return cookieApi(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, redirect to login or handle as needed
-        console.log('Token refresh failed, user needs to login again');
-        
-        // Clear any authentication state
-        localStorage.removeItem('user');
-        
-        // You can dispatch a logout action here if using Redux/Context
-        // or redirect to login page
-        window.location.href = '/login';
-        
-        return Promise.reject(refreshError);
+    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
+      if (isRefreshing) {
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(() => {
+          return cookieApi(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
       }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+      
+      return new Promise(function(resolve, reject) {
+        cookieApi.post('/auth/cookie/refresh')
+          .then(({ data }) => {
+            processQueue(null, data);
+            resolve(cookieApi(originalRequest));
+          })
+          .catch((refreshError) => {
+            processQueue(refreshError, null);
+            // Refresh failed, redirect to login or handle as needed
+            console.log('Token refresh failed, user needs to login again');
+            
+            // Clear any authentication state
+            localStorage.removeItem('user');
+            
+            window.dispatchEvent(new Event('auth-failed'));
+            // You can dispatch a logout action here if using Redux/Context
+            // or redirect to login page
+            window.location.href = '/login';
+            
+            reject(refreshError);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
+    }
+    
+    // If the refresh request itself fails with 401, redirect to login
+    if (error.response?.status === 401 && isRefreshRequest) {
+      console.log('Refresh token expired, user needs to login again');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('auth-failed'));
+      window.location.href = '/login';
     }
     
     return Promise.reject(error);

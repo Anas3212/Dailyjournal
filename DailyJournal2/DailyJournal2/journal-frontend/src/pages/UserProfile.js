@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -69,18 +69,18 @@ function UserProfile() {
     fetchUserFriends();
     fetchTeamsStats();
     fetchUserVerifications();
-  }, [userId]);
+  }, [userId, fetchUserProfile, fetchJournalStats, fetchUserFriends, fetchTeamsStats, fetchUserVerifications]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const response = await getUserProfile(userId);
       setUserProfile(response.data);
     } catch (error) {
       setSnackbar({ open: true, message: 'Failed to load user profile', severity: 'error' });
     }
-  };
+  }, [userId]);
 
-  const fetchJournalStats = async () => {
+  const fetchJournalStats = useCallback(async () => {
     try {
       const response = await getPublicJournals(userId);
       const publicJournals = response.data || [];
@@ -95,9 +95,9 @@ function UserProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
-  const fetchUserFriends = async () => {
+  const fetchUserFriends = useCallback(async () => {
     try {
       const response = await getUserFriends(userId);
       setFriends(response.data || []);
@@ -105,9 +105,9 @@ function UserProfile() {
       console.error('Failed to load user friends:', error);
       setFriends([]);
     }
-  };
+  }, [userId]);
 
-  const fetchTeamsStats = async () => {
+  const fetchTeamsStats = useCallback(async () => {
     try {
       const response = await getUserTeamsStats(userId);
       setTeamsStats(response || { teamsCount: 0, teamJournalsStats: [] });
@@ -115,9 +115,9 @@ function UserProfile() {
       console.error('Failed to load teams stats:', error);
       setTeamsStats({ teamsCount: 0, teamJournalsStats: [] });
     }
-  };
+  }, [userId]);
 
-  const fetchUserVerifications = async () => {
+  const fetchUserVerifications = useCallback(async () => {
     setVerificationsLoading(true);
     try {
       const response = await getUserVerifications(userId);
@@ -128,7 +128,7 @@ function UserProfile() {
     } finally {
       setVerificationsLoading(false);
     }
-  };
+  }, [userId]);
 
   const handleViewVerificationFile = async (verification) => {
     try {

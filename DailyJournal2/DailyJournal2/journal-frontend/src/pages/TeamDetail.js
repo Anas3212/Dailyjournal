@@ -124,6 +124,7 @@ function TeamDetail() {
       loadNotices();
       loadConnectedTeams();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId, user]);
 
   // If user removed a friend, optionally prompt to remove them from the team too.
@@ -167,6 +168,7 @@ function TeamDetail() {
       }
     });
     // We only want to trigger once per presence of the param; cleaning the URL avoids loops.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members, location.search]);
 
   const loadTeamData = async () => {
