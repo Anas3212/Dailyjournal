@@ -121,8 +121,12 @@ public class SecurityConfig {
                 // Allow credentials for cookie-based authentication
                 config.setAllowCredentials(true);
 
-                // Allow specific origins from environment
-                config.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+                // Allow specific origins from environment, plus the vercel app explicitly
+                List<String> origins = new java.util.ArrayList<>(Arrays.asList(allowedOrigins.split(",")));
+                if (!origins.contains("https://dailyjournal-one.vercel.app")) {
+                        origins.add("https://dailyjournal-one.vercel.app");
+                }
+                config.setAllowedOriginPatterns(origins);
 
                 // Allow all HTTP methods
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

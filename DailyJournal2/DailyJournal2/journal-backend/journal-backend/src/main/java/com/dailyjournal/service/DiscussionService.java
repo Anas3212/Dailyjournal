@@ -34,10 +34,10 @@ public class DiscussionService {
     // Discussion CRUD operations
     public Discussion createDiscussion(Long journalId, Long authorId, String title, String content) {
         JournalEntry journal = journalRepository.findById(journalId)
-            .orElseThrow(() -> new RuntimeException("Journal not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Journal not found"));
+
         User author = userRepository.findById(authorId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Validate that journal is published
         if (!journal.isPublished()) {
@@ -45,7 +45,8 @@ public class DiscussionService {
         }
 
         // Check if user has reached the limit of 3 discussions for this journal
-        long userDiscussionCount = discussionRepository.countByJournalAndAuthorAndStatus(journal, author, Discussion.DiscussionStatus.ACTIVE);
+        long userDiscussionCount = discussionRepository.countByJournalAndAuthorAndStatus(journal, author,
+                Discussion.DiscussionStatus.ACTIVE);
         if (userDiscussionCount >= 3) {
             throw new RuntimeException("You can only create up to 3 discussions per journal");
         }
@@ -62,7 +63,7 @@ public class DiscussionService {
 
     public Discussion updateDiscussion(Long discussionId, Long userId, String title, String content) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         // Check if user is the author
         if (!discussion.getAuthor().getId().equals(userId)) {
@@ -83,7 +84,7 @@ public class DiscussionService {
 
     public void deleteDiscussion(Long discussionId, Long userId) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         // Check if user is the author or journal owner
         boolean isAuthor = discussion.getAuthor().getId().equals(userId);
@@ -99,7 +100,7 @@ public class DiscussionService {
 
     public Discussion getDiscussion(Long discussionId) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         if (discussion.getStatus() == Discussion.DiscussionStatus.DELETED) {
             throw new RuntimeException("Discussion not found");
@@ -113,40 +114,40 @@ public class DiscussionService {
     // Discussion queries
     public Page<Discussion> getDiscussionsByJournal(Long journalId, String sortBy, Pageable pageable) {
         JournalEntry journal = journalRepository.findById(journalId)
-            .orElseThrow(() -> new RuntimeException("Journal not found"));
+                .orElseThrow(() -> new RuntimeException("Journal not found"));
 
         if (sortBy != null && !sortBy.isEmpty()) {
             return discussionRepository.findByJournalWithSorting(
-                journal, Discussion.DiscussionStatus.ACTIVE, sortBy, pageable);
+                    journal, Discussion.DiscussionStatus.ACTIVE, sortBy, pageable);
         }
 
         return discussionRepository.findByJournalAndStatusOrderByIsPinnedDescCreatedAtDesc(
-            journal, Discussion.DiscussionStatus.ACTIVE, pageable);
+                journal, Discussion.DiscussionStatus.ACTIVE, pageable);
     }
 
     public Page<Discussion> searchDiscussions(String query, Pageable pageable) {
         return discussionRepository.searchDiscussions(
-            query, Discussion.DiscussionStatus.ACTIVE, pageable);
+                query, Discussion.DiscussionStatus.ACTIVE, pageable);
     }
 
     public Page<Discussion> getPopularDiscussions(Pageable pageable) {
         return discussionRepository.findPopularDiscussions(
-            Discussion.DiscussionStatus.ACTIVE, pageable);
+                Discussion.DiscussionStatus.ACTIVE, pageable);
     }
 
     public Page<Discussion> getRecentDiscussions(int days, Pageable pageable) {
         LocalDateTime since = LocalDateTime.now().minusDays(days);
         return discussionRepository.findRecentDiscussions(
-            Discussion.DiscussionStatus.ACTIVE, since, pageable);
+                Discussion.DiscussionStatus.ACTIVE, since, pageable);
     }
 
     // Answer CRUD operations
     public DiscussionAnswer createAnswer(Long discussionId, Long authorId, String content, Long parentAnswerId) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         User author = userRepository.findById(authorId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check if discussion is locked
         if (discussion.getIsLocked()) {
@@ -161,8 +162,8 @@ public class DiscussionService {
         // Handle parent answer for replies
         if (parentAnswerId != null) {
             DiscussionAnswer parentAnswer = answerRepository.findById(parentAnswerId)
-                .orElseThrow(() -> new RuntimeException("Parent answer not found"));
-            
+                    .orElseThrow(() -> new RuntimeException("Parent answer not found"));
+
             // Validate parent answer belongs to same discussion
             if (!parentAnswer.getDiscussion().getId().equals(discussionId)) {
                 throw new RuntimeException("Parent answer does not belong to this discussion");
@@ -184,7 +185,7 @@ public class DiscussionService {
 
     public DiscussionAnswer updateAnswer(Long answerId, Long userId, String content) {
         DiscussionAnswer answer = answerRepository.findById(answerId)
-            .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new RuntimeException("Answer not found"));
 
         // Check if user is the author
         if (!answer.getAuthor().getId().equals(userId)) {
@@ -204,7 +205,7 @@ public class DiscussionService {
 
     public void deleteAnswer(Long answerId, Long userId) {
         DiscussionAnswer answer = answerRepository.findById(answerId)
-            .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new RuntimeException("Answer not found"));
 
         // Check if user is the author or journal owner
         boolean isAuthor = answer.getAuthor().getId().equals(userId);
@@ -230,7 +231,7 @@ public class DiscussionService {
 
     public DiscussionAnswer acceptAnswer(Long answerId, Long userId) {
         DiscussionAnswer answer = answerRepository.findById(answerId)
-            .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new RuntimeException("Answer not found"));
 
         Discussion discussion = answer.getDiscussion();
 
@@ -241,8 +242,8 @@ public class DiscussionService {
 
         // Unaccept any previously accepted answers
         List<DiscussionAnswer> acceptedAnswers = answerRepository
-            .findByDiscussionAndIsAcceptedTrueAndIsDeletedFalse(discussion);
-        
+                .findByDiscussionAndIsAcceptedTrueAndIsDeletedFalse(discussion);
+
         for (DiscussionAnswer acceptedAnswer : acceptedAnswers) {
             acceptedAnswer.setIsAccepted(false);
             answerRepository.save(acceptedAnswer);
@@ -256,19 +257,20 @@ public class DiscussionService {
     // Answer queries
     public Page<DiscussionAnswer> getAnswersByDiscussion(Long discussionId, String sortBy, Pageable pageable) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         if (sortBy != null && !sortBy.isEmpty()) {
             return answerRepository.findByDiscussionWithSorting(discussion, sortBy, pageable);
         }
 
-        return answerRepository.findByDiscussionAndParentAnswerIsNullAndIsDeletedFalseOrderByIsAcceptedDescVoteScoreDescCreatedAtAsc(
-            discussion, pageable);
+        return answerRepository
+                .findByDiscussionAndParentAnswerIsNullAndIsDeletedFalseOrderByIsAcceptedDescVoteScoreDescCreatedAtAsc(
+                        discussion, pageable);
     }
 
     public List<DiscussionAnswer> getRepliesByAnswer(Long answerId) {
         DiscussionAnswer answer = answerRepository.findById(answerId)
-            .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new RuntimeException("Answer not found"));
 
         return answerRepository.findByParentAnswerAndIsDeletedFalseOrderByCreatedAtAsc(answer);
     }
@@ -276,10 +278,10 @@ public class DiscussionService {
     // Voting operations
     public void voteOnDiscussion(Long discussionId, Long userId, DiscussionVote.VoteType voteType) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check if user is trying to vote on their own discussion
         if (discussion.getAuthor().getId().equals(userId)) {
@@ -315,10 +317,10 @@ public class DiscussionService {
 
     public void voteOnAnswer(Long answerId, Long userId, DiscussionVote.VoteType voteType) {
         DiscussionAnswer answer = answerRepository.findById(answerId)
-            .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new RuntimeException("Answer not found"));
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Check if user is trying to vote on their own answer
         if (answer.getAuthor().getId().equals(userId)) {
@@ -355,14 +357,14 @@ public class DiscussionService {
     // Statistics
     public Long getDiscussionCount(Long journalId) {
         JournalEntry journal = journalRepository.findById(journalId)
-            .orElseThrow(() -> new RuntimeException("Journal not found"));
+                .orElseThrow(() -> new RuntimeException("Journal not found"));
 
         return discussionRepository.countByJournalAndStatus(journal, Discussion.DiscussionStatus.ACTIVE);
     }
 
     public Long getAnswerCount(Long discussionId) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         return answerRepository.countByDiscussionAndNotDeleted(discussion);
     }
@@ -370,7 +372,7 @@ public class DiscussionService {
     // Moderation operations
     public Discussion pinDiscussion(Long discussionId, Long userId) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         // Check if user is the journal owner
         if (!discussion.getJournal().getUser().getId().equals(userId)) {
@@ -383,7 +385,7 @@ public class DiscussionService {
 
     public Discussion lockDiscussion(Long discussionId, Long userId) {
         Discussion discussion = discussionRepository.findById(discussionId)
-            .orElseThrow(() -> new RuntimeException("Discussion not found"));
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
 
         // Check if user is the journal owner
         if (!discussion.getJournal().getUser().getId().equals(userId)) {

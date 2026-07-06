@@ -38,6 +38,12 @@ public class CookieJWTFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
         
+        // Let CORS filter handle OPTIONS requests
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         // Skip authentication for public endpoints (except media endpoints)
         if (isPublicEndpoint(uri) && !uri.startsWith("/api/journals/media/")) {
             filterChain.doFilter(request, response);
