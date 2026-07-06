@@ -30,7 +30,11 @@ public class SecurityUtils {
             return (User) principal;
         }
         
-        throw new RuntimeException("Invalid authentication principal type");
+        if ("anonymousUser".equals(principal)) {
+            throw new RuntimeException("No authenticated user found");
+        }
+        
+        throw new RuntimeException("Invalid authentication principal type: " + principal.getClass().getName());
     }
 
     /**

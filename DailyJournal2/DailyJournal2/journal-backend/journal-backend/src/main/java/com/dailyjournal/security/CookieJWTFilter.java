@@ -44,17 +44,25 @@ public class CookieJWTFilter extends OncePerRequestFilter {
             return;
         }
         
-        // Skip authentication for public endpoints (except media endpoints)
-        if (isPublicEndpoint(uri) && !uri.startsWith("/api/journals/media/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Try cookie-based authentication
-        if (authenticateWithCookie(request)) {
+        // Try cookie-based authentication first
+        boolean authenticated = authenticateWithCookie(request);
+        
+        if (authenticated) {
             log.debug("Authentication successful via cookie for: {}", uri);
         }
-        // Check if we have expired tokens and should return 401 for refresh
+        // If not authenticated, check if it's a public endpoint
+        else if (isPublicEndpoint(uri) && !uri.startsWith("/api/journals/media/")) {
+            // Check if we have expired tokens and should return 401 for refresh, UNLESS it's a GET request to a public endpoint where anonymous is okay
+            if (hasExpiredTokens(request) && !request.getMethod().equalsIgnoreCase("GET")) {
+                log.debug("Expired tokens found on non-GET public endpoint, returning 401 for refresh: {}", uri);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("{\"error\":\"Access token expired\",\"code\":\"TOKEN_EXPIRED\"}");
+                response.setContentType("application/json");
+                return;
+            }
+            log.debug("Public endpoint accessed anonymously: {}", uri);
+        }
+        // If it's a private endpoint and not authenticated, check for expired tokens
         else if (hasExpiredTokens(request)) {
             log.debug("Expired tokens found, returning 401 for refresh: {}", uri);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -62,10 +70,8 @@ public class CookieJWTFilter extends OncePerRequestFilter {
             response.setContentType("application/json");
             return;
         }
-        // If authentication fails, continue without authentication
-        else {
-            log.debug("No valid authentication found for: {}", uri);
-        }
+
+        // Proceed with the filter chain
 
         filterChain.doFilter(request, response);
     }
