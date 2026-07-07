@@ -63,6 +63,7 @@ public class SecurityConfig {
                                                                 "/api/journals/published",
                                                                 "/api/journals/published/**",
                                                                 "/api/discussions/journal/**",
+                                                                "/api/keep-alive",
                                                                 "/actuator/health",
                                                                 "/actuator/info")
                                                 .permitAll()

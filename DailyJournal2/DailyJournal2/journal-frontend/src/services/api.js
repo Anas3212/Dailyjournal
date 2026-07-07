@@ -31,7 +31,7 @@ const processQueue = (error, token = null) => {
       prom.resolve(token);
     }
   });
-  
+
   failedQueue = [];
 };
 
@@ -46,14 +46,14 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     // Check if the request is already a refresh request to prevent infinite loops
     const isRefreshRequest = originalRequest?.url?.includes('/auth/cookie/refresh');
-    
+
     // Only retry on 401 (Unauthorized / token expired) — NOT 403 (Forbidden = permission denied)
     if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         }).then(() => {
           return api(originalRequest);
@@ -64,8 +64,8 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
       isRefreshing = true;
-      
-      return new Promise(function(resolve, reject) {
+
+      return new Promise(function (resolve, reject) {
         api.post('/auth/cookie/refresh')
           .then(({ data }) => {
             processQueue(null, data);
@@ -75,16 +75,16 @@ api.interceptors.response.use(
             processQueue(refreshError, null);
             // Refresh failed, redirect to login
             console.log('Token refresh failed, user needs to login again');
-            
+
             // Clear user data from localStorage (keep for app state only)
             localStorage.removeItem('user');
-            
+
             // Dispatch a custom event to notify components that authentication failed
             window.dispatchEvent(new Event('auth-failed'));
-            
+
             // Redirect to login page
             window.location.href = '/login';
-            
+
             reject(refreshError);
           })
           .finally(() => {
@@ -92,7 +92,7 @@ api.interceptors.response.use(
           });
       });
     }
-    
+
     // If the refresh request itself fails with 401, redirect to login
     if (error.response?.status === 401 && isRefreshRequest) {
       console.log('Refresh token expired, user needs to login again');
@@ -100,7 +100,7 @@ api.interceptors.response.use(
       window.dispatchEvent(new Event('auth-failed'));
       window.location.href = '/login';
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -484,7 +484,7 @@ export const getAllActiveSessions = (page = 0, size = 50) =>
 export const initializeAuth = async () => {
   try {
     const response = await validateSession();
-    
+
     if (response.data.authenticated) {
       // Store user data in localStorage for app state (not tokens!)
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -495,7 +495,7 @@ export const initializeAuth = async () => {
       localStorage.setItem('user', JSON.stringify(refreshResponse.data.user));
       return refreshResponse.data.user;
     }
-    
+
     return null;
   } catch (error) {
     console.log('Authentication initialization failed:', error);
@@ -565,7 +565,7 @@ export const getFolders = (page = null, size = null) => {
   const params = new URLSearchParams();
   if (page !== null) params.append('page', page);
   if (size !== null) params.append('size', size);
-  
+
   const queryString = params.toString();
   return api.get(`/folders${queryString ? `?${queryString}` : ''}`);
 };

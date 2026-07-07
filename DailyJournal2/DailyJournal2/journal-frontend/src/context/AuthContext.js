@@ -1,11 +1,11 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { 
-  login as apiLogin, 
-  register as apiRegister, 
+import {
+  login as apiLogin,
+  register as apiRegister,
   logout as apiLogout,
   initializeAuth,
   getCurrentUserFromStorage,
-  clearUserFromStorage 
+  clearUserFromStorage
 } from '../services/api';
 
 export const AuthContext = createContext();
@@ -23,20 +23,20 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const initialize = async () => {
       if (initialized) return;
-      
+
       try {
         setLoading(true);
-        
+
         // First check localStorage for existing user data
         const storedUser = getCurrentUserFromStorage();
         if (storedUser) {
           setUser(storedUser);
         }
-        
+
         // Then validate with server using cookies
         const authenticatedUser = await initializeAuth();
         setUser(authenticatedUser);
-        
+
       } catch (error) {
         console.error('Auth initialization failed:', error);
         setUser(null);
@@ -54,14 +54,14 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const response = await apiLogin(email, password);
-      
+
       if (response.data.success) {
         const userData = response.data.user;
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         return { success: true, user: userData };
       }
-      
+
       return { success: false, error: 'Login failed' };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed';
@@ -75,14 +75,14 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const response = await apiRegister(name, email, password);
-      
+
       if (response.data.success) {
         const userData = response.data.user;
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         return { success: true, user: userData };
       }
-      
+
       return { success: false, error: 'Registration failed' };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed';
@@ -112,12 +112,12 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
+    <AuthContext.Provider value={{
+      user,
+      loading,
       initialized,
-      login, 
-      register, 
+      login,
+      register,
       logout,
       isAuthenticated,
       isAdmin,
