@@ -75,11 +75,6 @@ const Workshop = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuFile, setMenuFile] = useState(null);
 
-  useEffect(() => {
-    loadFiles();
-    loadStats();
-    loadFileTypes();
-  }, [loadFiles, loadStats, loadFileTypes]);
 
   const loadFiles = useCallback(async () => {
     try {
@@ -120,6 +115,12 @@ const Workshop = () => {
       console.error('Error loading file types:', error);
     }
   }, []);
+
+  useEffect(() => {
+    loadFiles();
+    loadStats();
+    loadFileTypes();
+  }, [loadFiles, loadStats, loadFileTypes]);
 
   const handleCreateFile = async (fileData) => {
     try {

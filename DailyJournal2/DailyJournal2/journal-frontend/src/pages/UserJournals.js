@@ -79,11 +79,7 @@ function UserJournals() {
 
   const moods = ['all', 'happy', 'sad', 'excited', 'calm', 'anxious', 'grateful', 'frustrated', 'inspired'];
 
-  useEffect(() => {
-    if (!user) return;
-    fetchCurrentUser();
-    fetchJournals();
-  }, [user, userId, fetchCurrentUser, fetchJournals]);
+
 
   const fetchCurrentUser = useCallback(async () => {
     try {
@@ -92,7 +88,7 @@ function UserJournals() {
     } catch (error) {
       console.error('Error fetching current user:', error);
     }
-  }, []);
+  }, [userId]);
 
   const fetchJournals = useCallback(async () => {
     setLoading(true);
@@ -111,6 +107,13 @@ function UserJournals() {
       setLoading(false);
     }
   }, [currentUser, userId]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchCurrentUser();
+    fetchJournals();
+  }, [user, userId, fetchCurrentUser, fetchJournals]);
+
 
   const handleSearch = async (e) => {
     e.preventDefault();

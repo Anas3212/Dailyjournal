@@ -63,13 +63,7 @@ function UserProfile() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [profileImageDialog, setProfileImageDialog] = useState({ open: false, imageUrl: '', userName: '' });
 
-  useEffect(() => {
-    fetchUserProfile();
-    fetchJournalStats();
-    fetchUserFriends();
-    fetchTeamsStats();
-    fetchUserVerifications();
-  }, [userId, fetchUserProfile, fetchJournalStats, fetchUserFriends, fetchTeamsStats, fetchUserVerifications]);
+
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -129,6 +123,15 @@ function UserProfile() {
       setVerificationsLoading(false);
     }
   }, [userId]);
+
+  useEffect(() => {
+    fetchUserProfile();
+    fetchJournalStats();
+    fetchUserFriends();
+    fetchTeamsStats();
+    fetchUserVerifications();
+  }, [userId, fetchUserProfile, fetchJournalStats, fetchUserFriends, fetchTeamsStats, fetchUserVerifications]);
+
 
   const handleViewVerificationFile = async (verification) => {
     try {

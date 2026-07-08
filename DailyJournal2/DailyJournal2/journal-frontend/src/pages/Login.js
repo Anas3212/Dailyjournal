@@ -66,8 +66,12 @@ function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const result = await login(email, password);
+      if (result && result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result?.error || 'Invalid email or password');
+      }
     } catch (err) {
       setError('Invalid email or password');
     } finally {

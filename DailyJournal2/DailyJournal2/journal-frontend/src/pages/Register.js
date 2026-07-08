@@ -68,8 +68,12 @@ function Register() {
     setError(null);
     setLoading(true);
     try {
-      await register(name, email, password);
-      navigate('/dashboard');
+      const result = await register(name, email, password);
+      if (result && result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result?.error || 'Registration failed. Try a different email.');
+      }
     } catch (err) {
       setError('Registration failed. Try a different email.');
     } finally {
