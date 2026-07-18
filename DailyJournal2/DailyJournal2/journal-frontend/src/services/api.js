@@ -82,8 +82,10 @@ api.interceptors.response.use(
             // Dispatch a custom event to notify components that authentication failed
             window.dispatchEvent(new Event('auth-failed'));
 
-            // Redirect to login page
-            window.location.href = '/login';
+            // Redirect to login page only if not already on an auth page
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+              window.location.href = '/login';
+            }
 
             reject(refreshError);
           })
@@ -98,7 +100,9 @@ api.interceptors.response.use(
       console.log('Refresh token expired, user needs to login again');
       localStorage.removeItem('user');
       window.dispatchEvent(new Event('auth-failed'));
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
 
     return Promise.reject(error);

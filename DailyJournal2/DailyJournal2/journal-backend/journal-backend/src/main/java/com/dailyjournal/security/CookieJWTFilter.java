@@ -32,27 +32,28 @@ public class CookieJWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         String uri = request.getRequestURI();
-        
+
         // Let CORS filter handle OPTIONS requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
-        
+
         // Try cookie-based authentication first
         boolean authenticated = authenticateWithCookie(request);
-        
+
         if (authenticated) {
             log.debug("Authentication successful via cookie for: {}", uri);
         }
         // If not authenticated, check if it's a public endpoint
         else if (isPublicEndpoint(uri) && !uri.startsWith("/api/journals/media/")) {
-            // Check if we have expired tokens and should return 401 for refresh, UNLESS it's a GET request to a public endpoint where anonymous is okay
+            // Check if we have expired tokens and should return 401 for refresh, UNLESS
+            // it's a GET request to a public endpoint where anonymous is okay
             if (hasExpiredTokens(request) && !request.getMethod().equalsIgnoreCase("GET")) {
                 log.debug("Expired tokens found on non-GET public endpoint, returning 401 for refresh: {}", uri);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -83,7 +84,7 @@ public class CookieJWTFilter extends OncePerRequestFilter {
         try {
             // Extract access token from cookie
             Optional<String> accessTokenOpt = cookieJWTService.extractAccessTokenFromCookies(request);
-            
+
             if (accessTokenOpt.isEmpty()) {
                 return false;
             }
@@ -117,7 +118,6 @@ public class CookieJWTFilter extends OncePerRequestFilter {
         }
     }
 
-
     /**
      * Set authentication context for the user
      */
@@ -127,8 +127,7 @@ public class CookieJWTFilter extends OncePerRequestFilter {
                 null,
                 user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
-        );
+                        .collect(Collectors.toList()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
@@ -137,28 +136,29 @@ public class CookieJWTFilter extends OncePerRequestFilter {
      */
     private boolean isPublicEndpoint(String uri) {
         return uri.startsWith("/api/auth/") ||
-               uri.startsWith("/swagger-ui/") ||
-               uri.startsWith("/v3/api-docs/") ||
-               uri.startsWith("/api/users/profile-photo/") ||
-               uri.startsWith("/uploads/") ||
-               uri.equals("/api/reports/reasons") ||
-               uri.startsWith("/api/journals/published") ||
-               uri.startsWith("/api/discussions/journal/") ||
-               uri.startsWith("/error");
+                uri.startsWith("/swagger-ui/") ||
+                uri.startsWith("/v3/api-docs/") ||
+                uri.startsWith("/api/users/profile-photo/") ||
+                uri.startsWith("/uploads/") ||
+                uri.equals("/api/reports/reasons") ||
+                uri.startsWith("/api/journals/published") ||
+                uri.startsWith("/api/discussions/journal/") ||
+                uri.startsWith("/error");
     }
 
     /**
-     * Check if request has expired access tokens that should trigger 401 for refresh
+     * Check if request has expired access tokens that should trigger 401 for
+     * refresh
      */
     private boolean hasExpiredTokens(HttpServletRequest request) {
         try {
             // Check if we have access token cookie
             Optional<String> accessTokenOpt = cookieJWTService.extractAccessTokenFromCookies(request);
-            
+
             if (accessTokenOpt.isPresent()) {
                 String accessToken = accessTokenOpt.get();
                 String userEmail = cookieJWTService.extractUsername(accessToken);
-                
+
                 // If we can extract username but token is invalid (likely expired)
                 if (userEmail != null) {
                     User user = userRepository.findByEmail(userEmail).orElse(null);
@@ -168,7 +168,7 @@ public class CookieJWTFilter extends OncePerRequestFilter {
                     }
                 }
             }
-            
+
             return false;
         } catch (Exception e) {
             log.debug("Error checking for expired tokens: {}", e.getMessage());
